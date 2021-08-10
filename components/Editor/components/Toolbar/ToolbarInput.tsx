@@ -2,11 +2,11 @@ import { Input, InputProps } from "@chakra-ui/react";
 import { useNode } from "@craftjs/core";
 import React, { FC } from "react";
 
-export interface ToolbarInputProps extends InputProps {
+export interface ToolBarInputProps extends InputProps {
   onChange?: (value: any) => void;
 }
 
-export const ToolbarInput: FC<ToolbarInputProps> = ({
+export const ToolBarInput: FC<ToolBarInputProps> = ({
   name,
   onChange,
   ...props

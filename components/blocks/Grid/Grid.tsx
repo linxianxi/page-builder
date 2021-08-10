@@ -2,7 +2,8 @@ import { UserComponent, useNode } from "@craftjs/core";
 import { SimpleGrid, SimpleGridProps } from "@chakra-ui/react";
 import React from "react";
 
-import { Toolbar } from "../../Editor/components/Toolbar/Toolbar";
+import { ToolBar } from "../../Editor/components/ToolBar";
+import { StylePanel } from "../../Editor/components/StylePanel";
 
 export interface GridProps extends SimpleGridProps {}
 
@@ -23,7 +24,7 @@ export const Grid: UserComponent<GridProps> = ({ children, ...otherProps }) => {
             alignItems: "center",
             justifyContent: "center",
             minH: 10,
-            borderColor: "gray.300",
+            borderColor: "gray.200",
             borderWidth: 1,
             borderStyle: "dashed",
           }
@@ -39,28 +40,26 @@ Grid.craft = {
   displayName: "网格",
   isCanvas: true,
   related: {
-    toolbar: () => {
+    inputPanel: () => {
       return (
-        <Toolbar
-          config={[
+        <ToolBar
+          inputs={[
             {
-              name: "内容",
-              toolbars: [
-                {
-                  name: "每行列数量",
-                  prop: "columns",
-                  type: "input",
-                },
-                {
-                  name: "间距",
-                  prop: "columns",
-                  type: "input",
-                },
-              ],
+              type: "number",
+              name: "每行列数量",
+              prop: "columns",
+            },
+            {
+              type: "string",
+              name: "间距",
+              prop: "spacing",
             },
           ]}
         />
       );
+    },
+    stylePanel: () => {
+      return <StylePanel />;
     },
   },
 };

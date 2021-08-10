@@ -27,7 +27,7 @@ export const Container: UserComponent<BoxProps> = ({
             alignItems: "center",
             justifyContent: "center",
             minH: 10,
-            borderColor: "gray.300",
+            borderColor: "gray.200",
             borderWidth: 1,
             borderStyle: "dashed",
           }

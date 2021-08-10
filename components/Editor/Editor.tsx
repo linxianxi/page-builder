@@ -2,19 +2,23 @@ import React, { FC } from "react";
 import { Editor as CraftEditor } from "@craftjs/core";
 
 import { RenderBlock } from "./components/RenderBlock";
-
-import { Grid as UserGrid } from "../blocks/Grid";
-import { Container as UserContainer } from "../blocks/Container";
-import { Image as UserImage } from "../blocks/Image";
 import { EditorContent } from "./EditorContent";
+
+import { Grid } from "../blocks/Grid";
+import { Code } from "../blocks/Code";
+import { Container } from "../blocks/Container";
+import { Image } from "../blocks/Image";
+import { Box } from "../blocks/Box";
 
 export const Editor: FC = ({ children }) => {
   return (
     <CraftEditor
       resolver={{
-        UserContainer,
-        UserGrid,
-        UserImage,
+        Box,
+        Code,
+        Container,
+        Grid,
+        Image,
       }}
       onRender={RenderBlock}
     >

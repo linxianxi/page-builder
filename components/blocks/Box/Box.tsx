@@ -12,26 +12,8 @@ export const Box: UserComponent<BoxProps> = ({ children, ...otherProps }) => {
   }));
 
   return (
-    <BaseBox
-      ref={(ref) => connect(drag(ref))}
-      mx="auto"
-      my={0}
-      width="full"
-      maxWidth="container.lg"
-      {...(!children
-        ? {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minH: 10,
-            borderColor: "gray.300",
-            borderWidth: 1,
-            borderStyle: "dashed",
-          }
-        : {})}
-      {...otherProps}
-    >
-      {children || "容器"}
+    <BaseBox ref={(ref) => connect(drag(ref))} {...otherProps}>
+      {children}
     </BaseBox>
   );
 };

@@ -6,7 +6,8 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 
-import { Toolbar } from "../../Editor/components/Toolbar/Toolbar";
+import { ToolBar } from "../../Editor/components/ToolBar";
+import { StylePanel } from "../../Editor/components/StylePanel";
 
 export interface ImageProps extends BaseImageProps {}
 
@@ -31,23 +32,21 @@ Image.craft = {
   displayName: "图片",
   props: {},
   related: {
-    toolbar: () => {
+    inputPanel: () => {
       return (
-        <Toolbar
-          config={[
+        <ToolBar
+          inputs={[
             {
-              name: "图片",
-              toolbars: [
-                {
-                  name: "图片",
-                  prop: "src",
-                  type: "input",
-                },
-              ],
+              type: "string",
+              name: "地址",
+              prop: "src",
             },
           ]}
         />
       );
+    },
+    stylePanel: () => {
+      return <StylePanel />;
     },
   },
 };

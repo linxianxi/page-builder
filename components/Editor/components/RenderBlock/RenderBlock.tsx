@@ -1,8 +1,14 @@
-import { useNode, useEditor } from "@craftjs/core";
+import { useNode, useEditor, ROOT_NODE } from "@craftjs/core";
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
-import { Box, Button, ButtonGroup } from "@chakra-ui/react";
-import { FaArrowsAlt, FaTrash } from "react-icons/fa";
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  IconButton,
+  Tooltip,
+} from "@chakra-ui/react";
+import { FaArrowsAlt, FaPlus, FaTrash } from "react-icons/fa";
 import { useRect } from "@reach/rect";
 
 export const RenderBlock = ({ render }) => {
@@ -17,11 +23,12 @@ export const RenderBlock = ({ render }) => {
     dom,
     moveable,
     deletable,
+    name,
     connectors: { drag },
   } = useNode((node) => ({
     isHover: node.events.hovered,
     dom: node.dom,
-    name: node.data.custom.displayName || node.data.displayName,
+    name: node.data?.custom.displayName || node.data.displayName,
     moveable: query.node(node.id).isDraggable(),
     deletable: query.node(node.id).isDeletable(),
     parent: node.data.parent,
@@ -55,20 +62,13 @@ export const RenderBlock = ({ render }) => {
                   zIndex="docked"
                   boxShadow="lg"
                   borderRadius="md"
-                  __css={{
-                    mt: -8,
-                  }}
                   style={{
-                    left: rect.x + rect.width / 4,
-                    top: rect.y === 0 ? rect.y + rect.height : rect.y,
+                    left: rect.x,
+                    top: rect.y === 0 ? rect.y + rect.height : rect.y - 32,
                   }}
                 >
-                  <ButtonGroup isAttached size="sm">
-                    {moveable ? (
-                      <Button ref={drag}>
-                        <FaArrowsAlt />
-                      </Button>
-                    ) : null}
+                  <ButtonGroup isAttached colorScheme="blue" size="sm">
+                    {moveable ? <Button ref={drag}>{name}</Button> : null}
 
                     {/* {id !== ROOT_NODE && (
                   <Button
@@ -82,23 +82,43 @@ export const RenderBlock = ({ render }) => {
                 )} */}
 
                     {deletable ? (
-                      <Button
-                        ref={drag}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          actions.delete(id);
-                        }}
-                      >
-                        <FaTrash />
-                      </Button>
+                      <Tooltip label="删除">
+                        <IconButton
+                          aria-label="删除"
+                          onClick={(event) => {
+                            console.log("删除", id);
+                            event.stopPropagation();
+                            actions.delete(id);
+                          }}
+                          icon={<FaTrash />}
+                        />
+                      </Tooltip>
                     ) : null}
                   </ButtonGroup>
                 </Box>
               ) : null}
 
+              {isActive && id !== ROOT_NODE ? (
+                <Tooltip label="在这里插入模块">
+                  <IconButton
+                    isRound
+                    colorScheme="blue"
+                    aria-label="插入模块"
+                    size="sm"
+                    pos="fixed"
+                    zIndex="docked"
+                    icon={<FaPlus />}
+                    style={{
+                      left: rect.x + rect.width - 48,
+                      top: rect.y + rect.height - 16,
+                    }}
+                  />
+                </Tooltip>
+              ) : null}
+
               <Box
                 pos="absolute"
-                borderTopColor="blue"
+                borderTopColor="blue.500"
                 borderTopWidth={isActive ? 2 : 1}
                 borderTopStyle={isActive ? "dashed" : "solid"}
                 style={{
@@ -110,7 +130,7 @@ export const RenderBlock = ({ render }) => {
 
               <Box
                 pos="absolute"
-                borderLeftColor="blue"
+                borderLeftColor="blue.500"
                 borderLeftWidth={isActive ? 2 : 1}
                 borderLeftStyle={isActive ? "dashed" : "solid"}
                 style={{
@@ -122,11 +142,11 @@ export const RenderBlock = ({ render }) => {
 
               <Box
                 pos="absolute"
-                borderBottomColor="blue"
+                borderBottomColor="blue.500"
                 borderBottomWidth={isActive ? 2 : 1}
                 borderBottomStyle={isActive ? "dashed" : "solid"}
                 style={{
-                  top: rect.height,
+                  top: rect.height - (isActive ? 2 : 1),
                   left: 0,
                   width: rect.width,
                 }}
@@ -134,12 +154,12 @@ export const RenderBlock = ({ render }) => {
 
               <Box
                 pos="absolute"
-                borderRightColor="blue"
+                borderRightColor="blue.500"
                 borderRightWidth={isActive ? 2 : 1}
                 borderRightStyle={isActive ? "dashed" : "solid"}
                 style={{
                   top: 0,
-                  left: rect.width,
+                  left: rect.width - (isActive ? 2 : 1),
                   height: rect.height,
                 }}
               />
