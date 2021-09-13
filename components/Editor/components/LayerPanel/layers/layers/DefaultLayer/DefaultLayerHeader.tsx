@@ -12,7 +12,7 @@ import React from "react";
 import { EditableLayerName } from "./EditableLayerName";
 
 import { useLayer } from "../useLayer";
-import { Box, Flex, IconButton, useToken } from "@chakra-ui/react";
+import { Box, Flex, IconButton } from "@chakra-ui/react";
 
 export const DefaultLayerHeader: React.FC = () => {
   const {
@@ -28,21 +28,22 @@ export const DefaultLayerHeader: React.FC = () => {
     };
   });
 
-  const { hidden, actions, selected, topLevel } = useEditor((state, query) => ({
-    hidden: state.nodes[id] && state.nodes[id].data.hidden,
-    selected: state.events.selected === id,
-    topLevel: query.node(id).isTopLevelCanvas(),
-  }));
+  const { hidden, actions, selected, topLevel } = useEditor((state, query) => {
+    const selected = query.getEvent("selected").first() === id;
+
+    return {
+      hidden: state.nodes[id] && state.nodes[id].data.hidden,
+      selected,
+      topLevel: query.node(id).isTopLevelCanvas(),
+    };
+  });
 
   return (
     <Flex
       ref={drag}
       background={selected ? "blue.100" : "transparent"}
       borderRadius="md"
-      style={{
-        // paddingLeft: `calc(${depth} * ${useToken("space", 6)})`,
-        paddingLeft: `${depth}em`,
-      }}
+      pl={`${depth}em`}
       height={8}
       align="center"
     >

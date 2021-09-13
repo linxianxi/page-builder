@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { Frame } from "@craftjs/core";
-import { Box, Flex, Grid, GridItem, useToken } from "@chakra-ui/react";
+import { Box, Grid, GridItem, useToken } from "@chakra-ui/react";
 import { useEditor } from "@craftjs/core";
 
 import { SideBar } from "./components/SideBar";
@@ -35,9 +35,9 @@ export const EditorContent: FC = ({ children }) => {
       </GridItem>
 
       <GridItem colSpan={{ base: 2, "2xl": 1 }}>
+        <StatusBar />
         <Box
           className="page-container"
-          bgColor="gray.200"
           mx="auto"
           width="full"
           height="full"
@@ -45,7 +45,7 @@ export const EditorContent: FC = ({ children }) => {
           borderLeftWidth={1}
           borderRightWidth={1}
           overflow="auto"
-          p={4}
+          h="calc(100vh - 88px)"
         >
           <Box
             ref={(ref) => connectors.select(connectors.hover(ref, null), null)}
@@ -60,21 +60,22 @@ export const EditorContent: FC = ({ children }) => {
                   return "full";
               }
             })()}
-            height="full"
-            my={0}
-            mx={"auto"}
           >
-            <Frame data={localStorage.getItem("data")}>{children}</Frame>
+            <Frame
+              data={
+                typeof window !== "undefined"
+                  ? localStorage.getItem("data")
+                  : ""
+              }
+            >
+              {children}
+            </Frame>
           </Box>
         </Box>
       </GridItem>
 
       <GridItem display={{ base: "none", "2xl": "block" }}>
         <SideBar />
-      </GridItem>
-
-      <GridItem colSpan={{ base: 2, "2xl": 1 }}>
-        <StatusBar />
       </GridItem>
     </Grid>
   );

@@ -1,5 +1,5 @@
 import React, { useMemo, Fragment, FC } from "react";
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 import { AppProps } from "next/app";
 import { Page } from "../interfaces/Page";
 import { theme } from "../theme";
@@ -11,7 +11,20 @@ const App: FC<AppProps & { Component: Page }> = ({ Component, pageProps }) => {
   );
 
   return (
-    <ChakraProvider theme={theme}>
+    <ChakraProvider
+      theme={extendTheme(
+        {
+          styles: {
+            global: () => ({
+              body: {
+                overflowY: "hidden",
+              },
+            }),
+          },
+        },
+        theme
+      )}
+    >
       <Layout>
         <Component {...pageProps} />
       </Layout>

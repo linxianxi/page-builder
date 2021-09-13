@@ -15,7 +15,7 @@ import { useNode } from "@craftjs/core";
 import React, { FC } from "react";
 import Editor from "@monaco-editor/react";
 
-export interface CodeInputProps {
+interface CodeInputProps {
   input: {
     name: string;
     prop: string;

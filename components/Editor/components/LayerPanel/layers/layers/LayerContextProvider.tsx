@@ -1,47 +1,48 @@
-import { useEditor, useEventHandler } from '@craftjs/core';
-import { wrapConnectorHooks } from '@craftjs/utils';
-import React, { useMemo, useContext, useRef } from 'react';
+import { useEditor } from "@craftjs/core";
+import { wrapConnectorHooks } from "@craftjs/utils";
+import React, { useMemo, useContext, useRef, useEffect } from "react";
 
-import { LayerContext } from './LayerContext';
-import { LayerNode } from './LayerNode';
+import { LayerContext } from "./LayerContext";
+import { LayerNode } from "./LayerNode";
 
-import { LayerHandlers } from '../events/LayerHandlers';
-import { LayerManagerContext } from '../manager';
+import { useLayerEventHandler } from "../events/LayerEventContext";
+import { LayerManagerContext } from "../manager";
 
-export const LayerContextProvider: React.FC<Omit<
-  LayerContext,
-  'connectors'
->> = ({ id, depth }) => {
-  const coreEventHandlers = useEventHandler();
+export const LayerContextProvider: React.FC<Omit<LayerContext, "connectors">> =
+  ({ id, depth }) => {
+    const handlers = useLayerEventHandler();
 
-  const { store } = useContext(LayerManagerContext);
-  const storeRef = useRef(store);
-  storeRef.current = store;
+    const { store } = useContext(LayerManagerContext);
+    const storeRef = useRef(store);
+    storeRef.current = store;
 
-  const handlers = useMemo(
-    () =>
-      coreEventHandlers.derive(LayerHandlers, {
-        layerStore: storeRef.current,
-        layerId: id,
-      }),
-    [coreEventHandlers, id]
-  );
+    const connectorsUsage = useMemo(
+      () => handlers.createConnectorsUsage(),
+      [handlers]
+    );
 
-  const connectors = useMemo(() => wrapConnectorHooks(handlers.connectors), [
-    handlers,
-  ]);
+    const connectors = useMemo(
+      () => wrapConnectorHooks(connectorsUsage.connectors),
+      [connectorsUsage]
+    );
 
-  const { exists } = useEditor((state) => ({
-    exists: !!state.nodes[id],
-  }));
+    useEffect(() => {
+      return () => {
+        connectorsUsage.cleanup();
+      };
+    }, [connectorsUsage]);
 
-  if (!exists) {
-    return null;
-  }
+    const { exists } = useEditor((state) => ({
+      exists: !!state.nodes[id],
+    }));
 
-  return (
-    <LayerContext.Provider value={{ id, depth, connectors }}>
-      <LayerNode />
-    </LayerContext.Provider>
-  );
-};
+    if (!exists) {
+      return null;
+    }
+
+    return (
+      <LayerContext.Provider value={{ id, depth, connectors }}>
+        <LayerNode />
+      </LayerContext.Provider>
+    );
+  };

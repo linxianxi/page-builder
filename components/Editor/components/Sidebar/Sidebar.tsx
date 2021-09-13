@@ -12,15 +12,17 @@ import {
 import { useEditor } from "@craftjs/core";
 import { InsertPanel } from "../InsertPanel";
 import { OptionPanel } from "../OptionPanel";
-import { StylePanel } from "../StylePanel";
 import { LayerPanel } from "../LayerPanel";
 
 export const SideBar: FC = () => {
-  const { active, related } = useEditor((state) => ({
-    active: state.events.selected,
-    related:
-      state.events.selected && state.nodes[state.events.selected].related,
-  }));
+  const { active, related } = useEditor((state, query) => {
+    const currentlySelectedNodeId = query.getEvent("selected").first();
+    return {
+      active: currentlySelectedNodeId,
+      related:
+        currentlySelectedNodeId && state.nodes[currentlySelectedNodeId].related,
+    };
+  });
 
   return (
     <Tabs height="full">
@@ -31,7 +33,7 @@ export const SideBar: FC = () => {
         <Tab>样式</Tab>
       </TabList>
 
-      <TabPanels>
+      <TabPanels height="calc(100% - 42px)" overflow="auto">
         <TabPanel>
           <InsertPanel />
         </TabPanel>
