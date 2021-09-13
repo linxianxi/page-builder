@@ -7,7 +7,7 @@ import { useState } from "react";
 import { ToolBar } from "../../Editor/components/ToolBar";
 
 export interface CodeProps {
-  code: string;
+  code?: string;
   params?: object;
 }
 
@@ -28,6 +28,7 @@ export const Code: UserComponent<CodeProps> = ({ code, params }) => {
     <chakra.div
       ref={(ref) => connect(drag(ref))}
       height={html ? null : 8}
+      width="100%"
       dangerouslySetInnerHTML={{
         __html: html,
       }}
@@ -36,6 +37,7 @@ export const Code: UserComponent<CodeProps> = ({ code, params }) => {
 };
 
 Code.craft = {
+  isCanvas: true,
   displayName: "代码",
   props: {
     code: "",

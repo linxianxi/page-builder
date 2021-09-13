@@ -5,7 +5,7 @@ import { Layers } from "./layers";
 export const LayerPanel: FC = () => {
   return (
     <Box>
-      <Layers expandRootOnLoad={true} />
+      <Layers expandRootOnLoad />
     </Box>
   );
 };

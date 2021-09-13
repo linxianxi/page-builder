@@ -1,13 +1,16 @@
-import { Input, InputProps } from "@chakra-ui/react";
+import { FormControl, FormLabel, Input, InputProps } from "@chakra-ui/react";
 import { useNode } from "@craftjs/core";
 import React, { FC } from "react";
 
-export interface ToolBarInputProps extends InputProps {
-  onChange?: (value: any) => void;
+interface ToolBarInputProps extends InputProps {
+  input: {
+    name: string;
+    prop: string;
+  };
 }
 
 export const ToolBarInput: FC<ToolBarInputProps> = ({
-  name,
+  input,
   onChange,
   ...props
 }) => {
@@ -15,21 +18,22 @@ export const ToolBarInput: FC<ToolBarInputProps> = ({
     actions: { setProp },
     propValue,
   } = useNode((node) => ({
-    propValue: node.data.props[name],
+    propValue: node.data.props[input.name],
   }));
 
   return (
-    <Input
-      size="sm"
-      value={propValue}
-      onChange={(event) => {
-        setProp((props: any) => {
-          props[name] = onChange
-            ? onChange(event.target.value)
-            : event.target.value;
-        }, 500);
-      }}
-      {...props}
-    />
+    <FormControl key={input.name}>
+      <FormLabel>{input.name}</FormLabel>
+      <Input
+        size="sm"
+        value={propValue}
+        onChange={(event) => {
+          setProp((props: any) => {
+            props[input.name] = event.target.value;
+          }, 500);
+        }}
+        {...props}
+      />
+    </FormControl>
   );
 };

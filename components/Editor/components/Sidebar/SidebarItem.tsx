@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "@emotion/react";
+import styled from "@emotion/styled";
 
 import Arrow from "../../../../public/icons/arrow.svg";
 

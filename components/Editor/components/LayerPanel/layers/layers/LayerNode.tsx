@@ -1,22 +1,26 @@
-import { useEditor, ROOT_NODE } from '@craftjs/core';
-import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useEditor, ROOT_NODE } from "@craftjs/core";
+import React, { useRef, useEffect, useLayoutEffect, useState } from "react";
 
-import { LayerContextProvider } from './LayerContextProvider';
-import { useLayer } from './useLayer';
+import { LayerContextProvider } from "./LayerContextProvider";
+import { useLayer } from "./useLayer";
 
-import { useLayerManager } from '../manager/useLayerManager';
+import { useLayerManager } from "../manager/useLayerManager";
 
 export const LayerNode: React.FC = () => {
   const { id, depth, children, expanded } = useLayer((layer) => ({
     expanded: layer.expanded,
   }));
 
-  const { data, shouldBeExpanded } = useEditor((state, query) => ({
-    data: state.nodes[id] && state.nodes[id].data,
-    shouldBeExpanded:
-      state.events.selected &&
-      query.node(state.events.selected).ancestors(true).includes(id),
-  }));
+  const { data, shouldBeExpanded } = useEditor((state, query) => {
+    // TODO: handle multiple selected elements
+    const selected = query.getEvent("selected").first();
+
+    return {
+      data: state.nodes[id] && state.nodes[id].data,
+      shouldBeExpanded:
+        selected && query.node(selected).ancestors(true).includes(id),
+    };
+  });
 
   const {
     actions: { registerLayer, toggleLayer },

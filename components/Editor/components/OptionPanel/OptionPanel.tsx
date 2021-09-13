@@ -3,11 +3,14 @@ import { useEditor } from "@craftjs/core";
 import React, { FC } from "react";
 
 export const OptionPanel: FC = () => {
-  const { active, related } = useEditor((state) => ({
-    active: state.events.selected,
-    related:
-      state.events.selected && state.nodes[state.events.selected].related,
-  }));
+  const { active, related } = useEditor((state, query) => {
+    const currentlySelectedNodeId = query.getEvent("selected").first();
+    return {
+      active: currentlySelectedNodeId,
+      related:
+        currentlySelectedNodeId && state.nodes[currentlySelectedNodeId].related,
+    };
+  });
 
   return (
     <Box>

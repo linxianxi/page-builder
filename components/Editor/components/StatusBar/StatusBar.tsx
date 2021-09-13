@@ -11,18 +11,22 @@ import React from "react";
 
 export const StatusBar: FC = () => {
   const { actions, selected, selectedAncestorNodes } = useEditor(
-    (state, query) => ({
-      selected: state.events.selected,
-      selectedAncestorNodes: state.events.selected
-        ? [
-            query.node(state.events.selected).get(),
-            ...query
-              .node(state.events.selected)
-              .ancestors()
-              .map((id) => query.node(id).get()),
-          ].reverse()
-        : [],
-    })
+    (state, query) => {
+      const currentlySelectedNodeId = query.getEvent("selected").first();
+
+      return {
+        selected: currentlySelectedNodeId,
+        selectedAncestorNodes: currentlySelectedNodeId
+          ? [
+              query.node(currentlySelectedNodeId).get(),
+              ...query
+                .node(currentlySelectedNodeId)
+                .ancestors()
+                .map((id) => query.node(id).get()),
+            ].reverse()
+          : [],
+      };
+    }
   );
 
   return (
@@ -33,9 +37,7 @@ export const StatusBar: FC = () => {
       width="full"
       height={8}
       borderTopColor="gray.200"
-      borderTopWidth={1}
-      borderLeftWidth={1}
-      borderRightWidth={1}
+      borderWidth={1}
     >
       {selectedAncestorNodes.length > 0 ? (
         <Breadcrumb fontWeight="medium" fontSize="xs">

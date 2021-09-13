@@ -1,16 +1,13 @@
-import { NodeId } from '@craftjs/core';
-import { ChainableConnectors } from '@craftjs/utils';
-import React from 'react';
+import { NodeId } from "@craftjs/core";
+import { EventHandlerConnectors } from "@craftjs/utils";
+import React from "react";
 
-import { LayerHandlers } from '../events/LayerHandlers';
+import { LayerHandlers } from "../events/LayerHandlers";
 
 export type LayerContext = {
   id: NodeId;
   depth: number;
-  connectors: ChainableConnectors<
-    LayerHandlers['connectors'],
-    React.ReactElement
-  >;
+  connectors: EventHandlerConnectors<LayerHandlers, React.ReactElement>;
 };
 
 export const LayerContext = React.createContext<LayerContext>(

@@ -1,5 +1,5 @@
-import { Indicator, useEditor } from '@craftjs/core';
-import React from 'react';
+import { Indicator, useEditor } from "@craftjs/core";
+import React from "react";
 
 export type Placeholder = {
   placeholder: Indicator;
@@ -17,13 +17,13 @@ export const LayerIndicator: React.FC<Placeholder> = ({
   return (
     <div
       style={{
-        position: 'fixed',
-        display: 'block',
+        position: "fixed",
+        display: "block",
         opacity: 1,
         borderColor: placeholder.error ? indicator.error : indicator.success,
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        zIndex: '99999',
+        borderStyle: "solid",
+        borderWidth: "1px",
+        zIndex: "99999",
         ...suggestedStyles,
       }}
     ></div>
