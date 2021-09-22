@@ -17,16 +17,16 @@ import {
   FaMobileAlt,
   FaArrowLeft,
   FaDesktop,
-  FaExpand,
   FaRedo,
   FaUndo,
+  FaTabletAlt,
 } from "react-icons/fa";
 import { usePreviewMode } from "../../hooks/usePreviewMode";
 
 const previewModeOptions = [
-  { name: "移动", icon: <FaMobileAlt />, value: "mobile" },
   { name: "桌面", icon: <FaDesktop />, value: "desktop" },
-  { name: "全屏", icon: <FaExpand />, value: "fullscreen" },
+  { name: "平板", icon: <FaTabletAlt />, value: "tablet" },
+  { name: "移动", icon: <FaMobileAlt />, value: "mobile" },
 ];
 
 export const TopBar = () => {

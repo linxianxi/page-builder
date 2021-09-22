@@ -24,7 +24,7 @@ Button.craft = {
   props: {},
   rules: {
     canDrop: (targetNode) => {
-      if (targetNode.data.name === "Column") {
+      if (targetNode.data.name === "Row") {
         return false;
       }
       return true;

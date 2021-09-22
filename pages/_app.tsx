@@ -24,6 +24,7 @@ const App: FC<AppProps & { Component: Page }> = ({ Component, pageProps }) => {
         },
         theme
       )}
+      portalZIndex={1500}
     >
       <Layout>
         <Component {...pageProps} />

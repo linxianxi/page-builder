@@ -15,12 +15,12 @@ export interface ToolBarProps {
 export const ToolBar: FC<ToolBarProps> = ({ inputs = [] }) => {
   return (
     <>
-      {inputs.map((input) => {
+      {inputs.map((input, index) => {
         switch (input.type) {
           case "string" || "number":
-            return <ToolBarInput input={input} />;
+            return <ToolBarInput input={input} key={index} />;
           case "code":
-            return <CodeInput input={input} />;
+            return <CodeInput input={input} key={index} />;
           default:
             return null;
         }

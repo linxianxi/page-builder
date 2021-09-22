@@ -1,12 +1,22 @@
 import { useEditor, useNode, UserComponent } from "@craftjs/core";
 import React, { FC, useCallback } from "react";
-import { Button, Flex } from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { Patch } from "immer";
-import { Cell } from "./Cell";
+import { Column } from "./Column";
+import styled from "@emotion/styled";
 
 // import { ColumnSettings } from "./ColumnSettings";
 
-interface ColumnProps {
+const Wrapper = styled.div`
+  display: flex;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+  }
+`;
+
+interface RowProps {
   padding?: [
     string | number,
     string | number,
@@ -16,23 +26,13 @@ interface ColumnProps {
   margin?: [string | number, string | number, string | number, string | number];
 }
 
-export const Column: UserComponent<ColumnProps> = ({
-  children,
-  padding,
-  margin,
-}) => {
+export const Row: UserComponent<RowProps> = ({ children, padding, margin }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
 
   return (
-    <Flex
-      w="100%"
-      sx={{
-        "@media(max-width: 768px)": {
-          flexWrap: "wrap",
-        },
-      }}
+    <Wrapper
       ref={(ref: HTMLDivElement) => connect(drag(ref))}
       style={{
         padding: padding?.map((item) => `${item || "0"}px`).join(" "),
@@ -40,11 +40,11 @@ export const Column: UserComponent<ColumnProps> = ({
       }}
     >
       {children}
-    </Flex>
+    </Wrapper>
   );
 };
 
-const ColumnSettings: FC = () => {
+const RowSettings: FC = () => {
   const { actions, query, store, nodes } = useEditor((state) => ({
     nodes: state.nodes,
   }));
@@ -53,15 +53,14 @@ const ColumnSettings: FC = () => {
     children: node.data.nodes,
   }));
 
-  const addCell = useCallback(() => {
+  const addColumn = useCallback(() => {
+    const newWidth = `${100 / (children.length + 1)}%`;
     const newPatches: Patch[] = [];
     const oldPatches: Patch[] = [];
 
-    const percent = children.length / (children.length + 1);
-    // 遍历原来的 Cell，设置宽度
+    // 遍历原来的 Column，平分宽度
     children.forEach((item) => {
       const { width } = query.node(item).get().data.props;
-      const newWidth = `${parseFloat(width) * percent}%`;
 
       newPatches.push({
         op: "replace",
@@ -82,10 +81,10 @@ const ColumnSettings: FC = () => {
     const node = query
       .parseFreshNode({
         data: {
-          type: Cell,
+          type: Column,
           isCanvas: true,
           props: {
-            width: `${100 / (children.length + 1)}%`,
+            width: newWidth,
           },
         },
       })
@@ -116,11 +115,11 @@ const ColumnSettings: FC = () => {
     );
   }, [actions.history, children, id, nodes, query, store.history]);
 
-  return <Button onClick={addCell}>+</Button>;
+  return <Button onClick={addColumn}>+</Button>;
 };
 
-Column.craft = {
-  displayName: "网格",
+Row.craft = {
+  displayName: "行",
   isCanvas: true,
   defaultProps: {
     padding: [10, 10, 10, 10],
@@ -130,7 +129,7 @@ Column.craft = {
     canDrop: (targetNode, currentNode) => {
       if (
         targetNode.data.name === currentNode.data.name ||
-        targetNode.data.name === "Cell"
+        targetNode.data.name === "Column"
       ) {
         return false;
       }
@@ -138,6 +137,6 @@ Column.craft = {
     },
   },
   related: {
-    inputPanel: ColumnSettings,
+    inputPanel: RowSettings,
   },
 };

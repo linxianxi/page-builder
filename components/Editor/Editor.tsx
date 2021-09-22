@@ -1,31 +1,27 @@
 import React, { FC } from "react";
 import { Editor as CraftEditor } from "@craftjs/core";
-
-import { RenderBlock } from "./components/RenderBlock";
-import { EditorContent } from "./EditorContent";
-
 import { Code } from "../blocks/Code";
 import { Container } from "../blocks/Container";
 import { Image } from "../blocks/Image";
-import { Box } from "../blocks/Box";
-import { Column, Cell } from "../blocks/Column";
+import { Box as UserBox } from "../blocks/Box";
+import { Column, Row } from "../blocks/Row";
 import { Button } from "../blocks/Button";
+import { RenderBlock } from "./components/RenderBlock";
+import { EditorContent } from "./EditorContent";
 
-export const Editor: FC = ({ children }) => {
-  return (
-    <CraftEditor
-      resolver={{
-        Box,
-        Code,
-        Container,
-        Image,
-        Column,
-        Cell,
-        Button,
-      }}
-      onRender={RenderBlock}
-    >
-      <EditorContent>{children}</EditorContent>
-    </CraftEditor>
-  );
-};
+export const Editor: FC = ({ children }) => (
+  <CraftEditor
+    resolver={{
+      Box: UserBox,
+      Code,
+      Container,
+      Image,
+      Column,
+      Row,
+      Button,
+    }}
+    onRender={RenderBlock}
+  >
+    <EditorContent>{children}</EditorContent>
+  </CraftEditor>
+);

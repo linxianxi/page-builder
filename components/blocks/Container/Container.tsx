@@ -1,13 +1,16 @@
 import { UserComponent, useNode } from "@craftjs/core";
-import { Box, BoxProps as BaseBoxProps } from "@chakra-ui/react";
 import React from "react";
+import styled from "@emotion/styled";
 
-export interface BoxProps extends BaseBoxProps {}
+const Wrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  border: 1px solid #ccc;
+`;
 
-export const Container: UserComponent<BoxProps> = ({
-  children,
-  ...otherProps
-}) => {
+export const Container: UserComponent = ({ children }) => {
   const {
     connectors: { connect, drag },
   } = useNode((node) => ({
@@ -15,34 +18,16 @@ export const Container: UserComponent<BoxProps> = ({
   }));
 
   return (
-    <Box
-      ref={(ref) => connect(drag(ref))}
-      mx="auto"
-      my={0}
-      width="full"
-      maxWidth="container.lg"
-      {...(!children
-        ? {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minH: 10,
-            borderColor: "gray.200",
-            borderWidth: 1,
-            borderStyle: "dashed",
-          }
-        : {})}
-      {...otherProps}
-    >
-      {children || "容器"}
-    </Box>
+    <div ref={(ref) => connect(drag(ref))}>
+      {children || <Wrapper>+ Add Block</Wrapper>}
+    </div>
   );
 };
 
 Container.craft = {
-  displayName: "容器",
+  displayName: "页面",
   isCanvas: true,
-  related: {
-    // toolbar: ButtonSettings,
+  rules: {
+    canDrag: () => false,
   },
 };

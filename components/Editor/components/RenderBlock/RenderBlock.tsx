@@ -1,12 +1,29 @@
-import { useNode, useEditor, ROOT_NODE } from "@craftjs/core";
+import { useNode, useEditor, Node } from "@craftjs/core";
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
-import { Global } from "@emotion/react";
 import { Patch } from "immer";
-import { Box, IconButton, Tooltip, Text, Flex } from "@chakra-ui/react";
-import { FaArrowsAlt, FaTrash } from "react-icons/fa";
-import { useRect } from "@reach/rect";
+import {
+  FaArrowsAlt,
+  FaTrash,
+  FaCopy,
+  FaCloudDownloadAlt,
+} from "react-icons/fa";
 import { useCallback } from "react";
+import createCache from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
+import memoize from "@emotion/memoize";
+import stylisPluginExtraScope from "stylis-plugin-extra-scope";
+import { useIsScrolling } from "../../hooks/useIsScrolling";
+import shortid from "shortid";
+import { Flex, IconButton, Tooltip, Text } from "@chakra-ui/react";
+import { usePreviewMode } from "../../hooks/usePreviewMode";
+
+let memoizedCreateCacheWithScope = memoize((scope) => {
+  return createCache({
+    key: "origin",
+    stylisPlugins: [stylisPluginExtraScope(scope)],
+  });
+});
 
 export const RenderBlock = ({ render }) => {
   const { actions, query, hoveredNodeId, nodes, store } = useEditor(
@@ -44,17 +61,56 @@ export const RenderBlock = ({ render }) => {
     nodeProps: node.data.props,
   }));
 
-  const ref = useRef(dom);
-  const rect = useRect(ref);
+  const currentRef = useRef<HTMLDivElement>();
+
+  const [previewMode] = usePreviewMode();
+  const [isScrolling] = useIsScrolling();
+
+  const getPos = useCallback((dom: HTMLElement) => {
+    const { top, left, bottom } = dom
+      ? dom.getBoundingClientRect()
+      : { top: 0, left: 0, bottom: 0 };
+
+    const iframeRect = document
+      .getElementById("iframe-component")
+      ?.getBoundingClientRect();
+
+    const iframeLeft = iframeRect.left;
+    const iframeTop = iframeRect.top;
+
+    return {
+      top: `${top >= 0 ? top + iframeTop : bottom + iframeTop + 30}px`,
+      left: `${left + iframeLeft}px`,
+    };
+  }, []);
+
+  const scroll = useCallback(() => {
+    const { current: currentDOM } = currentRef;
+    if (!currentDOM) return;
+    const { top, left } = getPos(dom);
+    currentDOM.style.top = top;
+    currentDOM.style.left = left;
+  }, [dom, getPos]);
+
+  // 显示模式变化重新计算
+  useEffect(() => {
+    scroll();
+  }, [previewMode, scroll]);
+
+  useEffect(() => {
+    window.addEventListener("resize", scroll);
+
+    return () => {
+      window.removeEventListener("resize", scroll);
+    };
+  }, [scroll]);
 
   useEffect(() => {
     if (dom) {
-      ref.current = dom;
-
       if (isActive || isHover) {
-        if (name === "Cell") {
-          const children = dom.parentElement?.children as HTMLCollection;
-          for (let i = 0; i < children?.length; i += 1) {
+        if (name === "Column") {
+          const children = dom.parentElement.children;
+          for (let i = 0; i < children.length; i += 1) {
             children[i].classList.add("component-selected");
           }
           query
@@ -68,9 +124,9 @@ export const RenderBlock = ({ render }) => {
         } else {
           dom.classList.add("component-selected");
         }
-      } else if (name === "Cell") {
+      } else if (name === "Column") {
         let selected = false;
-        // 查询所有 Cell 是否有被 selected 选中的，如果有就不删除
+        // 查询所有 Column 是否有被 selected 选中的，如果有就不删除
         query
           .node(parent)
           .childNodes()
@@ -82,7 +138,7 @@ export const RenderBlock = ({ render }) => {
         if (selected) {
           return;
         }
-        // 如果下一个 hover 的和当前离开的 Cell 是同一个 parent，不删除
+        // 如果下一个 hover 的和当前离开的 Column 是同一个 parent，不删除
         if (
           hoveredNodeId &&
           query.node(hoveredNodeId).get().data.parent === parent
@@ -97,8 +153,8 @@ export const RenderBlock = ({ render }) => {
               props.showHandle = false;
             });
           });
-        const children = dom.parentElement?.children as HTMLCollection;
-        for (let i = 0; i < children?.length; i += 1) {
+        const children = dom.parentElement.children;
+        for (let i = 0; i < children.length; i += 1) {
           children[i].classList.remove("component-selected");
         }
       } else {
@@ -116,10 +172,64 @@ export const RenderBlock = ({ render }) => {
     query,
   ]);
 
+  const handleCopy = useCallback(() => {
+    const tree = query.node(id).toNodeTree();
+    const newNodes = {};
+    const changeNodeId = (node: Node, newParentId?: string) => {
+      const newNodeId = shortid();
+      const childNodes = node.data.nodes.map((childId) =>
+        changeNodeId(tree.nodes[childId], newNodeId)
+      );
+      const linkedNodes = Object.keys(node.data.linkedNodes).reduce(
+        (acc, id) => {
+          const newLinkedNodeId = changeNodeId(
+            tree.nodes[node.data.linkedNodes[id]],
+            newNodeId
+          );
+          return {
+            ...acc,
+            [id]: newLinkedNodeId,
+          };
+        },
+        {}
+      );
+
+      let tmpNode = {
+        ...node,
+        id: newNodeId,
+        data: {
+          ...node.data,
+          parent: newParentId || node.data.parent,
+          nodes: childNodes,
+          linkedNodes,
+        },
+      };
+      let freshNode = query.parseFreshNode(tmpNode).toNode();
+      newNodes[newNodeId] = freshNode;
+      return newNodeId;
+    };
+
+    const rootNodeId = changeNodeId(tree.nodes[tree.rootNodeId]);
+
+    const theNode = query.node(id).get();
+    const parentNode = query.node(theNode.data.parent).get();
+    const indexToAdd = parentNode.data.nodes.indexOf(id);
+    actions.addNodeTree(
+      {
+        rootNodeId,
+        nodes: newNodes,
+      },
+      parentNode.id,
+      indexToAdd + 1
+    );
+
+    actions.selectNode(rootNodeId);
+  }, [actions, id, query]);
+
   const handleDelete = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       event.stopPropagation();
-      if (name === "Cell") {
+      if (name === "Column") {
         const childrenArr = query
           .node(query.node(id).get().data.parent)
           .childNodes()
@@ -128,7 +238,7 @@ export const RenderBlock = ({ render }) => {
         if (childrenArr.length === 0) {
           actions.delete(parent);
         } else {
-          // 删除一个 Cell，其余的平分
+          // 删除一个 Column，其余的平分
           const newPatches: Patch[] = [];
           const oldPatches: Patch[] = [];
           childrenArr.forEach((item) => {
@@ -150,7 +260,6 @@ export const RenderBlock = ({ render }) => {
             });
 
             actions.history.ignore().setProp(item, (prop) => {
-              // eslint-disable-next-line no-param-reassign
               prop.width = newWidth;
             });
           });
@@ -191,88 +300,86 @@ export const RenderBlock = ({ render }) => {
     [actions, id, name, nodeProps.width, nodes, parent, query, store.history]
   );
 
+  const handleSaveTemplate = useCallback(() => {
+    console.log("保存为模版");
+  }, []);
+
   return (
     <>
-      {rect && (isHover || isActive)
+      {(isHover || isActive) && !isScrolling
         ? ReactDOM.createPortal(
-            <Box
-              pos="fixed"
-              zIndex="docked"
-              style={{
-                left: rect.x,
-                top: rect.y,
-              }}
-            >
-              <Global
-                styles={{
-                  ".component-selected": {
-                    position: "relative",
-                  },
-                  ".component-selected::after": {
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    display: "block",
-                    content: "''",
-                    width: "100%",
-                    height: "100%",
-                    pointerEvents: "none",
-                    border: "2px dashed var(--chakra-colors-blue-500)",
-                  },
-                }}
-              />
-              {isActive ? (
-                <Box
-                  pos="fixed"
-                  zIndex="docked"
-                  boxShadow="lg"
-                  borderRadius="md"
-                  style={{
-                    left: rect.x,
-                    top: rect.y === 0 ? rect.y + rect.height : rect.y - 40,
-                  }}
-                >
-                  <Flex bg="blue.500" borderRadius="md" align="center">
-                    <Text color="#fff" px={3} py={2}>
-                      {displayName}
-                    </Text>
-                    {moveable ? (
-                      <Tooltip label="拖拽">
-                        <IconButton
-                          colorScheme="blue"
-                          ref={drag}
-                          aria-label="拖拽"
-                          icon={<FaArrowsAlt />}
-                        />
-                      </Tooltip>
-                    ) : null}
+            <CacheProvider value={memoizedCreateCacheWithScope("#root")}>
+              <Flex
+                pos="fixed"
+                align="center"
+                h="30px"
+                mt="-29px"
+                borderRadius="md"
+                zIndex="1400"
+                overflow="hidden"
+                color="#fff"
+                ref={currentRef}
+                left={getPos(dom).left}
+                top={getPos(dom).top}
+              >
+                <Flex bg="blackAlpha.900" borderRadius="md" align="center">
+                  <Text color="#fff" px={3} py={2}>
+                    {displayName}
+                  </Text>
+                  {isActive && (
+                    <>
+                      {moveable && (
+                        <Tooltip label="拖拽">
+                          <IconButton
+                            colorScheme="black"
+                            ref={drag}
+                            h="30px"
+                            _hover={{ bg: "#464850" }}
+                            aria-label="drag"
+                            icon={<FaArrowsAlt />}
+                          />
+                        </Tooltip>
+                      )}
+                      {deletable && (
+                        <Tooltip label="删除">
+                          <IconButton
+                            colorScheme="black"
+                            aria-label="delete"
+                            h="30px"
+                            _hover={{ bg: "#464850" }}
+                            onClick={handleDelete}
+                            icon={<FaTrash />}
+                          />
+                        </Tooltip>
+                      )}
+                      {name !== "Column" && (
+                        <>
+                          <Tooltip label="拷贝">
+                            <IconButton
+                              colorScheme="black"
+                              aria-label="copy"
+                              h="30px"
+                              _hover={{ bg: "#464850" }}
+                              onClick={handleCopy}
+                              icon={<FaCopy />}
+                            />
+                          </Tooltip>
+                          <Tooltip label="保存为模版">
+                            <IconButton
+                              colorScheme="black"
+                              aria-label="save as template"
+                              h="30px"
+                              _hover={{ bg: "#464850" }}
+                              onClick={handleSaveTemplate}
+                              icon={<FaCloudDownloadAlt />}
+                            />
+                          </Tooltip>
+                        </>
+                      )}
+                    </>
+                  )}
 
-                    {/* {id !== ROOT_NODE && (
-                  <Button
-                    ref={drag}
-                    aria-label="Drag"
-                    icon={<FaAngleUp />}
-                    onClick={() => {
-                      actions.selectNode(parent);
-                    }}
-                  />
-                )} */}
-
-                    {deletable ? (
-                      <Tooltip label="删除">
-                        <IconButton
-                          colorScheme="blue"
-                          aria-label="删除"
-                          onClick={handleDelete}
-                          icon={<FaTrash />}
-                        />
-                      </Tooltip>
-                    ) : null}
-                  </Flex>
-                </Box>
-              ) : null}
-
-              {/* {isActive &&
+                  {/* {isActive &&
               id !== ROOT_NODE &&
               name !== "Button" &&
               name !== "Column" ? (
@@ -292,7 +399,9 @@ export const RenderBlock = ({ render }) => {
                   />
                 </Tooltip>
               ) : null} */}
-            </Box>,
+                </Flex>
+              </Flex>
+            </CacheProvider>,
             document.querySelector(".page-container")
           )
         : null}

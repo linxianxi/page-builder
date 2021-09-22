@@ -6,7 +6,7 @@ import { Editor } from "../components/Editor";
 export default function App() {
   return (
     <Editor>
-      <Element<any> canvas is={Container} custom={{ displayName: "页面" }} />
+      <Element<any> canvas is={Container} />
     </Editor>
   );
 }

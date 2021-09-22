@@ -1,26 +1,33 @@
 import { UserComponent } from "@craftjs/core";
 import React from "react";
 import { Resizer } from "./components/Resizer";
-import { Box } from "@chakra-ui/react";
 import { StylePanel } from "../../Editor/components/StylePanel";
+import styled from "@emotion/styled";
 
-export const Cell: UserComponent = ({ children }) => (
-  <Resizer>
-    {children || (
-      <Box color="gray.400" textAlign="center" py={5}>
-        这里是空的，请拖拽内容到这里
-      </Box>
-    )}
-  </Resizer>
+const Empty = styled.div`
+  color: #ccc;
+  text-align: center;
+  padding: 20px 0;
+`;
+
+export const Column: UserComponent = ({ children }) => (
+  <Resizer>{children || <Empty>这里是空的，请拖拽内容到这里</Empty>}</Resizer>
 );
 
-Cell.craft = {
+Column.craft = {
   displayName: "列",
   defaultProps: {
-    width: "100%",
+    width: "50%",
   },
   rules: {
-    canDrag: () => false,
+    // 只能在当前列里交换位置
+    canDrop: (dropTarget, current) => {
+      if (dropTarget.id === current.data.parent) {
+        return true;
+      }
+
+      return false;
+    },
   },
   related: {
     stylePanel: () => (

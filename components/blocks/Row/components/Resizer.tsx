@@ -1,10 +1,30 @@
 import { useEditor, useNode } from "@craftjs/core";
 import { Resizable, ResizableProps } from "re-resizable";
 import React, { FC, useMemo, useRef } from "react";
-import useMedia from "react-use/lib/useMedia";
-import { Box } from "@chakra-ui/react";
 import { useCallback } from "react";
 import omit from "lodash/omit";
+import styled from "@emotion/styled";
+
+const Handle = styled.div`
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 2px;
+  height: 100%;
+  background: #fff;
+  border: 2px solid #3182ce;
+`;
+
+const StyledResizable = styled(Resizable as any)`
+  @media (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    .column-resize-handle {
+      display: none;
+    }
+  }
+`;
 
 const getElementWidth = (element: HTMLElement): number => {
   const computedStyle = getComputedStyle(element);
@@ -18,7 +38,7 @@ const getElementWidth = (element: HTMLElement): number => {
   return width;
 };
 
-export const Resizer: FC<ResizableProps> = ({ children, ...rest }) => {
+export const Resizer: FC<ResizableProps> = ({ children }) => {
   const { actions, query, store } = useEditor();
 
   const {
@@ -32,8 +52,6 @@ export const Resizer: FC<ResizableProps> = ({ children, ...rest }) => {
     parentId: node.data.parent,
     nodeProps: node.data.props,
   }));
-
-  const isWide = useMedia("(max-width: 768px)");
 
   // 当前这个格子是列里的第几个
   const index = useMemo(
@@ -166,42 +184,31 @@ export const Resizer: FC<ResizableProps> = ({ children, ...rest }) => {
   }, [dom, id, nextId, nodeProps.width, query, store.history]);
 
   return (
-    <Resizable
+    <StyledResizable
       ref={(ref) => {
         if (ref) {
           resizable.current = ref;
           connect(resizable.current.resizable);
         }
       }}
-      enable={{ right: isWide ? false : !!nextId && nodeProps.showHandle }}
+      enable={{ right: !!nextId && nodeProps.showHandle }}
       handleComponent={
         nodeProps.showHandle
           ? {
-              right: (
-                <Box
-                  pos="absolute"
-                  top="50%"
-                  zIndex={2}
-                  width="10px"
-                  height="10px"
-                  mt="-5px"
-                  bg="#fff"
-                  borderWidth="2px"
-                  borderColor="blue.500"
-                />
-              ),
+              right: <Handle />,
             }
           : {}
       }
-      maxWidth={isWide ? "100%" : totalWidth ? totalWidth - 20 : "none"}
+      handleWrapperClass="column-resize-handle"
+      maxWidth={totalWidth ? totalWidth - 20 : "none"}
       minWidth={1}
-      size={{ width: isWide ? "100%" : nodeProps.width, height: "auto" }}
+      size={{ width: nodeProps.width, height: "auto" }}
       onResize={handleResize}
       onResizeStart={handleResizeStart}
       onResizeStop={handleResizeStop}
       style={omit(nodeProps, ["width", "showHandle"])}
     >
       {children}
-    </Resizable>
+    </StyledResizable>
   );
 };

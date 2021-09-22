@@ -1,23 +1,54 @@
-import React, { FC } from "react";
+import React, { FC, useMemo, useRef } from "react";
 import { Frame } from "@craftjs/core";
 import { Box, Grid, GridItem, useToken } from "@chakra-ui/react";
 import { useEditor } from "@craftjs/core";
+import createCache from "@emotion/cache";
+import weakMemoize from "@emotion/weak-memoize";
 
 import { SideBar } from "./components/SideBar";
 import { TopBar } from "./components/TopBar";
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { usePreviewMode } from "./hooks/usePreviewMode";
+import FrameComponent, { FrameContextConsumer } from "react-frame-component";
+import { CacheProvider } from "@emotion/react";
+import { useIsScrolling } from "./hooks/useIsScrolling";
+import { useCallback } from "react";
+
+const memoizedCreateCacheWithContainer = weakMemoize(
+  (container: HTMLElement) => {
+    let newCache = createCache({ container, key: "iframe" });
+    return newCache;
+  }
+);
 
 export const EditorContent: FC = ({ children }) => {
-  const {
-    enabled,
-    connectors,
-    actions: { setOptions },
-  } = useEditor((state) => ({
-    enabled: state.options.enabled,
-  }));
-
   const [previewMode] = usePreviewMode();
+
+  const timer = useRef(null);
+
+  const [, setIsScrolling] = useIsScrolling();
+
+  const iframeWidth = useMemo(() => {
+    switch (previewMode) {
+      case "mobile":
+        return "375px";
+      case "tablet":
+        return "768px";
+      default:
+        return "100%";
+    }
+  }, [previewMode]);
+
+  const handleScroll = useCallback(() => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    setIsScrolling(true);
+    timer.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 100);
+  }, [setIsScrolling]);
 
   return (
     <Grid
@@ -34,7 +65,7 @@ export const EditorContent: FC = ({ children }) => {
         <SideBar />
       </GridItem>
 
-      <GridItem colSpan={{ base: 2, "2xl": 1 }}>
+      <GridItem colSpan={2}>
         <StatusBar />
         <Box
           className="page-container"
@@ -44,38 +75,64 @@ export const EditorContent: FC = ({ children }) => {
           borderColor="gary.200"
           borderLeftWidth={1}
           borderRightWidth={1}
-          overflow="auto"
           h="calc(100vh - 88px)"
         >
-          <Box
-            ref={(ref) => connectors.select(connectors.hover(ref, null), null)}
-            bgColor="white"
-            width={(() => {
-              switch (previewMode) {
-                case "mobile":
-                  return "375px";
-                case "desktop":
-                  return "full";
-                default:
-                  return "full";
-              }
-            })()}
+          <FrameComponent
+            id="iframe-component"
+            style={{
+              width: iframeWidth,
+              height: "100%",
+              margin: "0 auto",
+              border: previewMode !== "desktop" ? "1px solid #ccc" : undefined,
+            }}
+            head={
+              <style type="text/css">{`
+                  *, *:before, *:after {
+                    box-sizing: border-box;
+                  }
+                  body {
+                    margin: 0;
+                  }
+                  .component-selected{ 
+                    position: relative 
+                  } 
+                  .component-selected:after {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    display: block;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    border: 2px dashed #3182CE;
+              }`}</style>
+            }
           >
-            <Frame
-              data={
-                typeof window !== "undefined"
-                  ? localStorage.getItem("data")
-                  : ""
-              }
-            >
-              {children}
-            </Frame>
-          </Box>
+            <FrameContextConsumer>
+              {(frameContext) => {
+                frameContext.document.addEventListener("scroll", handleScroll);
+                return (
+                  <CacheProvider
+                    value={memoizedCreateCacheWithContainer(
+                      frameContext.document.head
+                    )}
+                  >
+                    <Frame
+                      data={
+                        typeof window !== "undefined"
+                          ? localStorage.getItem("data")
+                          : ""
+                      }
+                    >
+                      {children}
+                    </Frame>
+                  </CacheProvider>
+                );
+              }}
+            </FrameContextConsumer>
+          </FrameComponent>
         </Box>
-      </GridItem>
-
-      <GridItem display={{ base: "none", "2xl": "block" }}>
-        <SideBar />
       </GridItem>
     </Grid>
   );

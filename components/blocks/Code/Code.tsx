@@ -1,9 +1,5 @@
 import { UserComponent, useNode } from "@craftjs/core";
-import { chakra } from "@chakra-ui/react";
 import React from "react";
-import { liquid } from "../../../lib/liquid";
-import { useEffect } from "react";
-import { useState } from "react";
 import { ToolBar } from "../../Editor/components/ToolBar";
 
 export interface CodeProps {
@@ -11,26 +7,21 @@ export interface CodeProps {
   params?: object;
 }
 
-export const Code: UserComponent<CodeProps> = ({ code, params }) => {
+export const Code: UserComponent<CodeProps> = () => {
   const {
     connectors: { connect, drag },
+    props,
   } = useNode((node) => ({
     selected: node.events.selected,
+    props: node.data.props,
   }));
 
-  const [html, setHtml] = useState("");
-
-  useEffect(() => {
-    liquid.parseAndRender(code, params).then(setHtml).catch(console.error);
-  }, [code, params]);
-
   return (
-    <chakra.div
+    <div
       ref={(ref) => connect(drag(ref))}
-      height={html ? null : 8}
-      width="100%"
+      style={{ height: props.code ? null : 30 }}
       dangerouslySetInnerHTML={{
-        __html: html,
+        __html: props.code,
       }}
     />
   );
@@ -39,9 +30,6 @@ export const Code: UserComponent<CodeProps> = ({ code, params }) => {
 Code.craft = {
   isCanvas: true,
   displayName: "代码",
-  props: {
-    code: "",
-  },
   related: {
     inputPanel: () => {
       return (
