@@ -10,24 +10,22 @@ import {
 import React from "react";
 
 export const StatusBar: FC = () => {
-  const { actions, selected, selectedAncestorNodes } = useEditor(
-    (state, query) => {
-      const currentlySelectedNodeId = query.getEvent("selected").first();
+  const { actions, selectedAncestorNodes } = useEditor((_, query) => {
+    const currentlySelectedNodeId = query.getEvent("selected").first();
 
-      return {
-        selected: currentlySelectedNodeId,
-        selectedAncestorNodes: currentlySelectedNodeId
-          ? [
-              query.node(currentlySelectedNodeId).get(),
-              ...query
-                .node(currentlySelectedNodeId)
-                .ancestors()
-                .map((id) => query.node(id).get()),
-            ].reverse()
-          : [],
-      };
-    }
-  );
+    return {
+      selected: currentlySelectedNodeId,
+      selectedAncestorNodes: currentlySelectedNodeId
+        ? [
+            query.node(currentlySelectedNodeId).get(),
+            ...query
+              .node(currentlySelectedNodeId)
+              .ancestors(true)
+              .map((id) => query.node(id).get()),
+          ].reverse()
+        : [],
+    };
+  });
 
   return (
     <Flex
@@ -36,8 +34,7 @@ export const StatusBar: FC = () => {
       px={4}
       width="full"
       height={8}
-      borderTopColor="gray.200"
-      borderWidth={1}
+      borderBottomWidth="1px"
     >
       {selectedAncestorNodes.length > 0 ? (
         <Breadcrumb fontWeight="medium" fontSize="xs">

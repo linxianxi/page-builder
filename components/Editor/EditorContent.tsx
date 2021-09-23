@@ -1,11 +1,10 @@
 import React, { FC, useMemo, useRef } from "react";
 import { Frame } from "@craftjs/core";
 import { Box, Grid, GridItem, useToken } from "@chakra-ui/react";
-import { useEditor } from "@craftjs/core";
 import createCache from "@emotion/cache";
 import weakMemoize from "@emotion/weak-memoize";
 
-import { SideBar } from "./components/SideBar";
+import { SideBar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { usePreviewMode } from "./hooks/usePreviewMode";
@@ -61,7 +60,7 @@ export const EditorContent: FC = ({ children }) => {
         <TopBar />
       </GridItem>
 
-      <GridItem rowSpan={2}>
+      <GridItem rowSpan={2} borderRightWidth="1px">
         <SideBar />
       </GridItem>
 

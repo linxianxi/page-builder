@@ -1,4 +1,4 @@
-import { useEditor, useNode, UserComponent } from "@craftjs/core";
+import { ROOT_NODE, useEditor, useNode, UserComponent } from "@craftjs/core";
 import React, { FC, useCallback } from "react";
 import { Button } from "@chakra-ui/react";
 import { Patch } from "immer";
@@ -126,16 +126,23 @@ Row.craft = {
     margin: [0, 0, 0, 0],
   },
   rules: {
-    // Row 不能拖动到 Row 或者 Column 里
-    canDrop: (targetNode) => {
-      if (targetNode.data.name === "Row") {
-        return false;
+    // 最多嵌套两个 Row
+    canDrop: (targetNode, _, helpers) => {
+      // 最外层，直接返回 true
+      if (targetNode.id === ROOT_NODE) {
+        return true;
       }
-      return true;
+
+      // 查找所有祖先 name 为 Row 的
+      const rowArr = helpers(targetNode.id)
+        .ancestors(true)
+        .filter((nodeId) => helpers(nodeId).get().data.name === "Row");
+
+      return rowArr.length < 2;
     },
     // 不能将东西拖动到 Row 里
     canMoveIn: (incomingNode, currentNode) => {
-      // Column 可以在当前 Row 拖动
+      // Column 的 parent 等于当前 Row，Column 可以在当前 Row 拖动
       if (incomingNode[0].data.parent === currentNode.id) {
         return true;
       }

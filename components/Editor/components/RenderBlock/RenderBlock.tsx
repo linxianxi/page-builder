@@ -49,6 +49,7 @@ export const RenderBlock = ({ render }) => {
     name,
     displayName,
     nodeProps,
+    nodeChildren,
     connectors: { drag },
   } = useNode((node) => ({
     isActive: node.events.selected,
@@ -60,12 +61,13 @@ export const RenderBlock = ({ render }) => {
     deletable: query.node(node.id).isDeletable(),
     parent: node.data.parent,
     nodeProps: node.data.props,
+    nodeChildren: node.data.nodes,
   }));
 
   const currentRef = useRef<HTMLDivElement>();
 
   const ref = useRef(dom);
-  const rect = useRect(ref);
+  const rect = useRect(ref, { observe: !!ref.current });
 
   const [previewMode] = usePreviewMode();
   const [isScrolling] = useIsScrolling();
@@ -150,8 +152,9 @@ export const RenderBlock = ({ render }) => {
               props.showHandle = false;
             });
           });
-        const children = dom.parentElement.children;
-        for (let i = 0; i < children.length; i += 1) {
+
+        const children = dom.parentElement?.children;
+        for (let i = 0; i < children?.length; i += 1) {
           children[i].classList.remove("component-selected");
         }
       }
@@ -209,38 +212,125 @@ export const RenderBlock = ({ render }) => {
     const theNode = query.node(id).get();
     const parentNode = query.node(theNode.data.parent).get();
     const indexToAdd = parentNode.data.nodes.indexOf(id);
-    actions.addNodeTree(
-      {
-        rootNodeId,
-        nodes: newNodes,
-      },
-      parentNode.id,
-      indexToAdd + 1
-    );
+
+    // 如果是 Column 拷贝，需要修改宽度，比较复杂
+    if (name === "Column") {
+      const newPatches: Patch[] = [];
+      const oldPatches: Patch[] = [];
+      const rowChildren = parentNode.data.nodes;
+      const newWidth = `${100 / (rowChildren.length + 1)}%`;
+      newNodes[rootNodeId].data.props.width = newWidth;
+      // 遍历原来的 Column，平分宽度
+      rowChildren.forEach((item) => {
+        const { width } = query.node(item).get().data.props;
+        newPatches.push({
+          op: "replace",
+          path: ["nodes", item, "data", "props", "width"],
+          value: newWidth,
+        });
+        oldPatches.push({
+          op: "replace",
+          path: ["nodes", item, "data", "props", "width"],
+          value: width,
+        });
+        actions.history.ignore().setProp(item, (props) => {
+          props.width = newWidth;
+        });
+      });
+      actions.history.ignore().addNodeTree(
+        {
+          rootNodeId,
+          nodes: newNodes,
+        },
+        parentNode.id,
+        indexToAdd + 1
+      );
+
+      store.history.add(
+        [
+          ...(Object.keys(newNodes).map((key) => ({
+            op: "add",
+            path: ["nodes", key],
+            value: newNodes[key],
+          })) as Patch[]),
+          {
+            op: "replace",
+            path: ["nodes", parentNode.id, "data", "nodes"],
+            value: parentNode.data.nodes.concat(rootNodeId),
+          },
+          ...newPatches,
+        ],
+        [
+          ...(Object.keys(newNodes).map((key) => ({
+            op: "remove",
+            path: ["nodes", key],
+          })) as Patch[]),
+          {
+            op: "replace",
+            path: ["nodes", parentNode.id, "data", "nodes"],
+            value: parentNode.data.nodes,
+          },
+          ...oldPatches,
+        ]
+      );
+    } else {
+      actions.addNodeTree(
+        {
+          rootNodeId,
+          nodes: newNodes,
+        },
+        parentNode.id,
+        indexToAdd + 1
+      );
+    }
 
     actions.selectNode(rootNodeId);
-  }, [actions, id, query]);
+  }, [actions, id, name, query, store.history]);
 
   const handleDelete = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       event.stopPropagation();
       if (name === "Column") {
-        const childrenArr = query
-          .node(query.node(id).get().data.parent)
+        // 剩下的 Column
+        const otherChildrenArr = query
+          .node(parent)
           .childNodes()
           .filter((item) => item !== id);
         // 如果就一个，直接把 Column 删掉
-        if (childrenArr.length === 0) {
+        if (otherChildrenArr.length === 0) {
           actions.delete(parent);
         } else {
-          // 删除一个 Column，其余的平分
           const newPatches: Patch[] = [];
           const oldPatches: Patch[] = [];
-          childrenArr.forEach((item) => {
+
+          // 一层一层遍历下去删除，要把 Column 里包含的一个个删除
+          if (nodeChildren.length) {
+            const deleteNode = (childrenNodes: string[]) => {
+              childrenNodes.forEach((item) => {
+                newPatches.push({
+                  op: "remove",
+                  path: ["nodes", item],
+                });
+                oldPatches.push({
+                  op: "add",
+                  path: ["nodes", item],
+                  value: nodes[item],
+                });
+                const childNodes = query.node(item).childNodes();
+                if (childNodes.length) {
+                  deleteNode(childNodes);
+                }
+              });
+            };
+            deleteNode(nodeChildren);
+          }
+
+          // 其余的 Column 设置宽度
+          otherChildrenArr.forEach((item) => {
             const { width } = query.node(item).get().data.props;
             const newWidth = `${
               parseFloat(width) +
-              parseFloat(nodeProps.width) / childrenArr.length
+              parseFloat(nodeProps.width) / otherChildrenArr.length
             }%`;
 
             newPatches.push({
@@ -292,7 +382,17 @@ export const RenderBlock = ({ render }) => {
         actions.delete(id);
       }
     },
-    [actions, id, name, nodeProps.width, nodes, parent, query, store.history]
+    [
+      actions,
+      id,
+      name,
+      nodeChildren,
+      nodeProps.width,
+      nodes,
+      parent,
+      query,
+      store.history,
+    ]
   );
 
   const handleSaveTemplate = useCallback(() => {
