@@ -5,16 +5,6 @@ import { useCallback } from "react";
 import omit from "lodash/omit";
 import styled from "@emotion/styled";
 
-const Handle = styled.div`
-  position: absolute;
-  top: 0;
-  left: 3px;
-  width: 2px;
-  height: 100%;
-  background: #fff;
-  border: 2px solid #3182ce;
-`;
-
 const StyledResizable = styled(Resizable as any)`
   @media (max-width: 768px) {
     width: 100% !important;
@@ -192,13 +182,9 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
         }
       }}
       enable={{ right: !!nextId && nodeProps.showHandle }}
-      handleComponent={
-        nodeProps.showHandle
-          ? {
-              right: <Handle />,
-            }
-          : {}
-      }
+      handleStyles={{
+        right: { width: 5, right: -2.5, background: "#3182ce", zIndex: 10 },
+      }}
       handleWrapperClass="column-resize-handle"
       maxWidth={totalWidth ? totalWidth - 20 : "none"}
       minWidth={1}

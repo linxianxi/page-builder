@@ -11,9 +11,11 @@
   "dependencies": {
     "@chakra-ui/react": "^1.6.6",
     "@craftjs/core": "^v0.2.0-alpha.27",
+    "@craftjs/utils": "^0.2.0-alpha.27",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
     "@monaco-editor/react": "^4.2.2",
+    "@reach/rect": "^0.16.0",
     "framer-motion": "^4.1.17",
     "liquidjs": "^9.25.1",
     "lodash": "^4.17.21",

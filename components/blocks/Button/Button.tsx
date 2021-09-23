@@ -21,15 +21,6 @@ export const Button: UserComponent<ButtonProps> = ({ children, ...rest }) => {
 
 Button.craft = {
   displayName: "按钮",
-  props: {},
-  rules: {
-    canDrop: (targetNode) => {
-      if (targetNode.data.name === "Row") {
-        return false;
-      }
-      return true;
-    },
-  },
   //   related: {
   //     inputPanel: () => {
   //       return (

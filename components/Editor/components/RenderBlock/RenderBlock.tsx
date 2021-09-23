@@ -1,4 +1,5 @@
-import { useNode, useEditor, Node } from "@craftjs/core";
+import { useNode, useEditor, Node, ROOT_NODE } from "@craftjs/core";
+import { getRandomId } from "@craftjs/utils";
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { Patch } from "immer";
@@ -14,9 +15,9 @@ import { CacheProvider } from "@emotion/react";
 import memoize from "@emotion/memoize";
 import stylisPluginExtraScope from "stylis-plugin-extra-scope";
 import { useIsScrolling } from "../../hooks/useIsScrolling";
-import shortid from "shortid";
-import { Flex, IconButton, Tooltip, Text } from "@chakra-ui/react";
+import { Flex, IconButton, Tooltip, Text, Box } from "@chakra-ui/react";
 import { usePreviewMode } from "../../hooks/usePreviewMode";
+import { useRect } from "@reach/rect";
 
 let memoizedCreateCacheWithScope = memoize((scope) => {
   return createCache({
@@ -63,6 +64,9 @@ export const RenderBlock = ({ render }) => {
 
   const currentRef = useRef<HTMLDivElement>();
 
+  const ref = useRef(dom);
+  const rect = useRect(ref);
+
   const [previewMode] = usePreviewMode();
   const [isScrolling] = useIsScrolling();
 
@@ -71,20 +75,13 @@ export const RenderBlock = ({ render }) => {
       ? dom.getBoundingClientRect()
       : { top: 0, left: 0, bottom: 0 };
 
-    const iframeRect = document
-      .getElementById("iframe-component")
-      ?.getBoundingClientRect();
-
-    const iframeLeft = iframeRect.left;
-    const iframeTop = iframeRect.top;
-
     return {
-      top: `${top >= 0 ? top + iframeTop : bottom + iframeTop + 30}px`,
-      left: `${left + iframeLeft}px`,
+      top: `${top > 30 ? top : bottom + 30}px`,
+      left: `${left}px`,
     };
   }, []);
 
-  const scroll = useCallback(() => {
+  const computePos = useCallback(() => {
     const { current: currentDOM } = currentRef;
     if (!currentDOM) return;
     const { top, left } = getPos(dom);
@@ -94,19 +91,21 @@ export const RenderBlock = ({ render }) => {
 
   // 显示模式变化重新计算
   useEffect(() => {
-    scroll();
-  }, [previewMode, scroll]);
+    computePos();
+  }, [previewMode, computePos]);
 
   useEffect(() => {
-    window.addEventListener("resize", scroll);
+    window.addEventListener("resize", computePos);
 
     return () => {
-      window.removeEventListener("resize", scroll);
+      window.removeEventListener("resize", computePos);
     };
-  }, [scroll]);
+  }, [computePos]);
 
   useEffect(() => {
     if (dom) {
+      ref.current = dom;
+
       if (isActive || isHover) {
         if (name === "Column") {
           const children = dom.parentElement.children;
@@ -121,8 +120,6 @@ export const RenderBlock = ({ render }) => {
                 props.showHandle = true;
               });
             });
-        } else {
-          dom.classList.add("component-selected");
         }
       } else if (name === "Column") {
         let selected = false;
@@ -157,8 +154,6 @@ export const RenderBlock = ({ render }) => {
         for (let i = 0; i < children.length; i += 1) {
           children[i].classList.remove("component-selected");
         }
-      } else {
-        dom.classList.remove("component-selected");
       }
     }
   }, [
@@ -176,7 +171,7 @@ export const RenderBlock = ({ render }) => {
     const tree = query.node(id).toNodeTree();
     const newNodes = {};
     const changeNodeId = (node: Node, newParentId?: string) => {
-      const newNodeId = shortid();
+      const newNodeId = getRandomId();
       const childNodes = node.data.nodes.map((childId) =>
         changeNodeId(tree.nodes[childId], newNodeId)
       );
@@ -306,80 +301,79 @@ export const RenderBlock = ({ render }) => {
 
   return (
     <>
-      {(isHover || isActive) && !isScrolling
+      {(isHover || isActive) && !isScrolling && rect
         ? ReactDOM.createPortal(
             <CacheProvider value={memoizedCreateCacheWithScope("#root")}>
-              <Flex
-                pos="fixed"
-                align="center"
-                h="30px"
-                mt="-29px"
-                borderRadius="md"
-                zIndex="1400"
-                overflow="hidden"
-                color="#fff"
-                ref={currentRef}
-                left={getPos(dom).left}
-                top={getPos(dom).top}
-              >
-                <Flex bg="blackAlpha.900" borderRadius="md" align="center">
-                  <Text color="#fff" px={3} py={2}>
-                    {displayName}
-                  </Text>
-                  {isActive && (
-                    <>
-                      {moveable && (
-                        <Tooltip label="拖拽">
-                          <IconButton
-                            colorScheme="black"
-                            ref={drag}
-                            h="30px"
-                            _hover={{ bg: "#464850" }}
-                            aria-label="drag"
-                            icon={<FaArrowsAlt />}
-                          />
-                        </Tooltip>
-                      )}
-                      {deletable && (
-                        <Tooltip label="删除">
-                          <IconButton
-                            colorScheme="black"
-                            aria-label="delete"
-                            h="30px"
-                            _hover={{ bg: "#464850" }}
-                            onClick={handleDelete}
-                            icon={<FaTrash />}
-                          />
-                        </Tooltip>
-                      )}
-                      {name !== "Column" && (
-                        <>
-                          <Tooltip label="拷贝">
+              {id !== ROOT_NODE && (
+                <Flex
+                  pos="absolute"
+                  align="center"
+                  h="30px"
+                  mt="-29px"
+                  borderRadius="md"
+                  zIndex={9999}
+                  overflow="hidden"
+                  color="#fff"
+                  ref={currentRef}
+                  left={getPos(dom).left}
+                  top={getPos(dom).top}
+                >
+                  <Flex bg="blackAlpha.900" borderRadius="md" align="center">
+                    <Text color="#fff" px={3} py={2}>
+                      {displayName}
+                    </Text>
+                    {isActive && (
+                      <>
+                        {moveable && (
+                          <Tooltip label="拖拽">
                             <IconButton
                               colorScheme="black"
-                              aria-label="copy"
+                              ref={drag}
                               h="30px"
                               _hover={{ bg: "#464850" }}
-                              onClick={handleCopy}
-                              icon={<FaCopy />}
+                              aria-label="drag"
+                              icon={<FaArrowsAlt />}
                             />
                           </Tooltip>
-                          <Tooltip label="保存为模版">
-                            <IconButton
-                              colorScheme="black"
-                              aria-label="save as template"
-                              h="30px"
-                              _hover={{ bg: "#464850" }}
-                              onClick={handleSaveTemplate}
-                              icon={<FaCloudDownloadAlt />}
-                            />
-                          </Tooltip>
-                        </>
-                      )}
-                    </>
-                  )}
+                        )}
 
-                  {/* {isActive &&
+                        {deletable && (
+                          <Tooltip label="删除">
+                            <IconButton
+                              colorScheme="black"
+                              aria-label="delete"
+                              h="30px"
+                              _hover={{ bg: "#464850" }}
+                              onClick={handleDelete}
+                              icon={<FaTrash />}
+                            />
+                          </Tooltip>
+                        )}
+
+                        <Tooltip label="拷贝">
+                          <IconButton
+                            colorScheme="black"
+                            aria-label="copy"
+                            h="30px"
+                            _hover={{ bg: "#464850" }}
+                            onClick={handleCopy}
+                            icon={<FaCopy />}
+                          />
+                        </Tooltip>
+                        <Tooltip label="保存为模版">
+                          <IconButton
+                            colorScheme="black"
+                            aria-label="save as template"
+                            h="30px"
+                            _hover={{ bg: "#464850" }}
+                            onClick={handleSaveTemplate}
+                            icon={<FaCloudDownloadAlt />}
+                          />
+                        </Tooltip>
+                      </>
+                    )}
+
+                    {/* {isActive &&
               id !== ROOT_NODE &&
               name !== "Button" &&
               name !== "Column" ? (
@@ -399,8 +393,36 @@ export const RenderBlock = ({ render }) => {
                   />
                 </Tooltip>
               ) : null} */}
+                  </Flex>
                 </Flex>
-              </Flex>
+              )}
+
+              {name !== "Column" && (
+                <Box
+                  pos="absolute"
+                  zIndex="docked"
+                  style={{
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    left: rect.left,
+                  }}
+                  pointerEvents="none"
+                  sx={{
+                    "&:after": {
+                      pos: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      content: '""',
+                      borderStyle: isActive ? "dashed" : "solid",
+                      borderWidth: "2px",
+                      borderColor: "blue.500",
+                    },
+                  }}
+                ></Box>
+              )}
             </CacheProvider>,
             document.querySelector(".page-container")
           )

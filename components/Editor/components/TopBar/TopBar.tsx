@@ -9,6 +9,7 @@ import {
   PopoverBody,
   Popover,
   PopoverTrigger,
+  Portal,
 } from "@chakra-ui/react";
 import { useEditor } from "@craftjs/core";
 import React from "react";
@@ -66,22 +67,24 @@ export const TopBar = () => {
               }
             />
           </PopoverTrigger>
-          <PopoverContent width={36}>
-            <PopoverBody>
-              <Stack direction="column">
-                {previewModeOptions.map((item) => (
-                  <Button
-                    key={item.name}
-                    justifyContent="flex-start"
-                    leftIcon={item.icon}
-                    onClick={() => setPreviewMode(item.value)}
-                  >
-                    {item.name}
-                  </Button>
-                ))}
-              </Stack>
-            </PopoverBody>
-          </PopoverContent>
+          <Portal>
+            <PopoverContent width={36}>
+              <PopoverBody>
+                <Stack direction="column">
+                  {previewModeOptions.map((item) => (
+                    <Button
+                      key={item.name}
+                      justifyContent="flex-start"
+                      leftIcon={item.icon}
+                      onClick={() => setPreviewMode(item.value)}
+                    >
+                      {item.name}
+                    </Button>
+                  ))}
+                </Stack>
+              </PopoverBody>
+            </PopoverContent>
+          </Portal>
         </Popover>
 
         <Tooltip label="撤销">

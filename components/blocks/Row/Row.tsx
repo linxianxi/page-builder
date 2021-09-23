@@ -126,14 +126,20 @@ Row.craft = {
     margin: [0, 0, 0, 0],
   },
   rules: {
-    canDrop: (targetNode, currentNode) => {
-      if (
-        targetNode.data.name === currentNode.data.name ||
-        targetNode.data.name === "Column"
-      ) {
+    // Row 不能拖动到 Row 或者 Column 里
+    canDrop: (targetNode) => {
+      if (targetNode.data.name === "Row") {
         return false;
       }
       return true;
+    },
+    // 不能将东西拖动到 Row 里
+    canMoveIn: (incomingNode, currentNode) => {
+      // Column 可以在当前 Row 拖动
+      if (incomingNode[0].data.parent === currentNode.id) {
+        return true;
+      }
+      return false;
     },
   },
   related: {

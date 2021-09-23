@@ -11,7 +11,7 @@ const Empty = styled.div`
 `;
 
 export const Column: UserComponent = ({ children }) => (
-  <Resizer>{children || <Empty>这里是空的，请拖拽内容到这里</Empty>}</Resizer>
+  <Resizer>{children || <Empty>+ add block</Empty>}</Resizer>
 );
 
 Column.craft = {

@@ -68,19 +68,18 @@ export const EditorContent: FC = ({ children }) => {
       <GridItem colSpan={2}>
         <StatusBar />
         <Box
+          pos="relative"
           className="page-container"
           mx="auto"
-          width="full"
+          width={iframeWidth}
           height="full"
-          borderColor="gary.200"
-          borderLeftWidth={1}
-          borderRightWidth={1}
           h="calc(100vh - 88px)"
+          overflow="hidden"
         >
           <FrameComponent
             id="iframe-component"
             style={{
-              width: iframeWidth,
+              width: "100%",
               height: "100%",
               margin: "0 auto",
               border: previewMode !== "desktop" ? "1px solid #ccc" : undefined,
