@@ -81,10 +81,12 @@ export const EditorContent: FC = ({ children }) => {
               width: "100%",
               height: "100%",
               margin: "0 auto",
-              border: previewMode !== "desktop" ? "1px solid #ccc" : undefined,
+              borderLeft: previewMode !== "desktop" && "1px solid #ccc",
+              borderRight: previewMode !== "desktop" && "1px solid #ccc",
             }}
             head={
-              <style type="text/css">{`
+              <style type="text/css">
+                {`
                   *, *:before, *:after {
                     box-sizing: border-box;
                   }
@@ -103,8 +105,24 @@ export const EditorContent: FC = ({ children }) => {
                     width: 100%;
                     height: 100%;
                     pointer-events: none;
+                    border: 2px solid #3182CE;
+                  }
+                  .component-selected-active{ 
+                    position: relative 
+                  } 
+                  .component-selected-active:after {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    display: block;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
                     border: 2px dashed #3182CE;
-              }`}</style>
+                  }
+                `}
+              </style>
             }
           >
             <FrameContextConsumer>

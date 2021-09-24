@@ -17,7 +17,7 @@ export const Column: UserComponent = ({ children }) => (
 Column.craft = {
   displayName: "列",
   defaultProps: {
-    width: "50%",
+    columnWidth: "50%",
   },
   rules: {
     // 只能在当前列里交换位置
@@ -39,6 +39,9 @@ Column.craft = {
               { type: "input", label: "高度", propName: "height" },
               { type: "input", label: "最小高度", propName: "minHeight" },
               { type: "input", label: "最大高度", propName: "maxHeight" },
+              { type: "input", label: "宽度", propName: "width" },
+              { type: "input", label: "最小宽度", propName: "minWidth" },
+              { type: "input", label: "最大宽度", propName: "maxWidth" },
             ],
           },
           {

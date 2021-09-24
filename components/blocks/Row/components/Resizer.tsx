@@ -65,17 +65,17 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
 
   // // 计算本格和下一格所占的 px， 这个 totalWidth 有延迟，不能用在 onResize 上(刚 resize 的 totalWidth 是上一次旧的)，用在 maxWidth 上没什么影响
   const totalWidth = useMemo(() => {
-    if (nextId && dom?.parentElement) {
+    if (nextId && dom && dom.parentElement) {
       // 本格和下一格所占的百分比
       const totalPercent =
-        parseFloat(nodeProps.width) +
-        parseFloat(query.node(nextId).get().data.props.width);
+        parseFloat(nodeProps.columnWidth) +
+        parseFloat(query.node(nextId).get().data.props.columnWidth);
       // 本格和下一格所占的 px
       const result = (getElementWidth(dom.parentElement) * totalPercent) / 100;
       return result;
     }
     return null;
-  }, [dom?.parentElement, nextId, nodeProps.width, query]);
+  }, [dom, nextId, nodeProps.columnWidth, query]);
 
   const startWidth = useRef(null);
 
@@ -83,8 +83,8 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
     if (dom) {
       // 重新计算 totalWidth，否则用上面计算的 totalWidth 的话在这里刚 resize 的时候是上一次旧的
       const totalPercent =
-        parseFloat(nodeProps.width) +
-        parseFloat(query.node(nextId).get().data.props.width);
+        parseFloat(nodeProps.columnWidth) +
+        parseFloat(query.node(nextId).get().data.props.columnWidth);
       // 本格和下一格所占的 px
       const result = (getElementWidth(dom.parentElement) * totalPercent) / 100;
 
@@ -98,14 +98,14 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
       }%`;
 
       actions.history.ignore().setProp(id, (props) => {
-        props.width = currentWidth;
+        props.columnWidth = currentWidth;
       });
 
       actions.history.ignore().setProp(nextId, (prop) => {
-        prop.width = nextWidth;
+        prop.columnWidth = nextWidth;
       });
     }
-  }, [actions.history, dom, id, nextId, nodeProps.width, query]);
+  }, [actions.history, dom, id, nextId, nodeProps.columnWidth, query]);
 
   const handleResizeStart = useCallback(
     (
@@ -116,19 +116,19 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
       e.preventDefault();
       e.stopPropagation();
       startWidth.current = {
-        currentWidth: nodeProps.width,
-        nextWidth: query.node(nextId).get().data.props.width,
+        currentWidth: nodeProps.columnWidth,
+        nextWidth: query.node(nextId).get().data.props.columnWidth,
       };
     },
-    [nextId, nodeProps.width, query]
+    [nextId, nodeProps.columnWidth, query]
   );
 
   const handleResizeStop = useCallback(() => {
     if (dom) {
       // 重新计算 totalWidth，否则用上面计算的 totalWidth 的话在这里刚 resize 的时候是上一次旧的
       const totalPercent =
-        parseFloat(nodeProps.width) +
-        parseFloat(query.node(nextId).get().data.props.width);
+        parseFloat(nodeProps.columnWidth) +
+        parseFloat(query.node(nextId).get().data.props.columnWidth);
       // 本格和下一格所占的 px
       const result = (getElementWidth(dom.parentElement) * totalPercent) / 100;
 
@@ -141,8 +141,14 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
         100
       }%`;
 
-      const timelinePath = ["nodes", id, "data", "props", "width"];
-      const nextTimelinePath = ["nodes", nextId, "data", "props", "width"];
+      const timelinePath = ["nodes", id, "data", "props", "columnWidth"];
+      const nextTimelinePath = [
+        "nodes",
+        nextId,
+        "data",
+        "props",
+        "columnWidth",
+      ];
 
       store.history.add(
         [
@@ -171,7 +177,7 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
         ]
       );
     }
-  }, [dom, id, nextId, nodeProps.width, query, store.history]);
+  }, [dom, id, nextId, nodeProps.columnWidth, query, store.history]);
 
   return (
     <StyledResizable
@@ -188,13 +194,14 @@ export const Resizer: FC<ResizableProps> = ({ children }) => {
       handleWrapperClass="column-resize-handle"
       maxWidth={totalWidth ? totalWidth - 20 : "none"}
       minWidth={1}
-      size={{ width: nodeProps.width, height: "auto" }}
+      size={{ width: nodeProps.columnWidth, height: "auto" }}
       onResize={handleResize}
       onResizeStart={handleResizeStart}
       onResizeStop={handleResizeStop}
-      style={omit(nodeProps, ["width", "showHandle"])}
     >
-      {children}
+      <div style={omit(nodeProps, ["columnWidth", "showHandle"])}>
+        {children}
+      </div>
     </StyledResizable>
   );
 };

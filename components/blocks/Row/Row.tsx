@@ -60,21 +60,21 @@ const RowSettings: FC = () => {
 
     // 遍历原来的 Column，平分宽度
     children.forEach((item) => {
-      const { width } = query.node(item).get().data.props;
+      const { columnWidth } = query.node(item).get().data.props;
 
       newPatches.push({
         op: "replace",
-        path: ["nodes", item, "data", "props", "width"],
+        path: ["nodes", item, "data", "props", "columnWidth"],
         value: newWidth,
       });
       oldPatches.push({
         op: "replace",
-        path: ["nodes", item, "data", "props", "width"],
-        value: width,
+        path: ["nodes", item, "data", "props", "columnWidth"],
+        value: columnWidth,
       });
 
       actions.history.ignore().setProp(item, (props) => {
-        props.width = newWidth;
+        props.columnWidth = newWidth;
       });
     });
 
@@ -84,7 +84,7 @@ const RowSettings: FC = () => {
           type: Column,
           isCanvas: true,
           props: {
-            width: newWidth,
+            columnWidth: newWidth,
           },
         },
       })

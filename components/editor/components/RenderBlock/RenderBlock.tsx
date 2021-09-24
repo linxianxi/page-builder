@@ -112,7 +112,11 @@ export const RenderBlock = ({ render }) => {
         if (name === "Column") {
           const children = dom.parentElement.children;
           for (let i = 0; i < children.length; i += 1) {
-            children[i].classList.add("component-selected");
+            if (isActive) {
+              children[i].classList.add("component-selected-active");
+            } else {
+              children[i].classList.add("component-selected");
+            }
           }
           query
             .node(parent)
@@ -155,7 +159,10 @@ export const RenderBlock = ({ render }) => {
 
         const children = dom.parentElement?.children;
         for (let i = 0; i < children?.length; i += 1) {
-          children[i].classList.remove("component-selected");
+          children[i].classList.remove(
+            "component-selected",
+            "component-selected-active"
+          );
         }
       }
     }
@@ -219,22 +226,22 @@ export const RenderBlock = ({ render }) => {
       const oldPatches: Patch[] = [];
       const rowChildren = parentNode.data.nodes;
       const newWidth = `${100 / (rowChildren.length + 1)}%`;
-      newNodes[rootNodeId].data.props.width = newWidth;
+      newNodes[rootNodeId].data.props.columnWidth = newWidth;
       // 遍历原来的 Column，平分宽度
       rowChildren.forEach((item) => {
-        const { width } = query.node(item).get().data.props;
+        const { columnWidth } = query.node(item).get().data.props;
         newPatches.push({
           op: "replace",
-          path: ["nodes", item, "data", "props", "width"],
+          path: ["nodes", item, "data", "props", "columnWidth"],
           value: newWidth,
         });
         oldPatches.push({
           op: "replace",
-          path: ["nodes", item, "data", "props", "width"],
-          value: width,
+          path: ["nodes", item, "data", "props", "columnWidth"],
+          value: columnWidth,
         });
         actions.history.ignore().setProp(item, (props) => {
-          props.width = newWidth;
+          props.columnWidth = newWidth;
         });
       });
       actions.history.ignore().addNodeTree(
@@ -327,25 +334,25 @@ export const RenderBlock = ({ render }) => {
 
           // 其余的 Column 设置宽度
           otherChildrenArr.forEach((item) => {
-            const { width } = query.node(item).get().data.props;
+            const { columnWidth } = query.node(item).get().data.props;
             const newWidth = `${
-              parseFloat(width) +
-              parseFloat(nodeProps.width) / otherChildrenArr.length
+              parseFloat(columnWidth) +
+              parseFloat(nodeProps.columnWidth) / otherChildrenArr.length
             }%`;
 
             newPatches.push({
               op: "replace",
-              path: ["nodes", item, "data", "props", "width"],
+              path: ["nodes", item, "data", "props", "columnWidth"],
               value: newWidth,
             });
             oldPatches.push({
               op: "replace",
-              path: ["nodes", item, "data", "props", "width"],
-              value: width,
+              path: ["nodes", item, "data", "props", "columnWidth"],
+              value: columnWidth,
             });
 
             actions.history.ignore().setProp(item, (prop) => {
-              prop.width = newWidth;
+              prop.columnWidth = newWidth;
             });
           });
           actions.history.ignore().delete(id);
@@ -387,7 +394,7 @@ export const RenderBlock = ({ render }) => {
       id,
       name,
       nodeChildren,
-      nodeProps.width,
+      nodeProps.columnWidth,
       nodes,
       parent,
       query,
