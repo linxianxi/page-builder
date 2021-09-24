@@ -12,16 +12,12 @@ const Wrapper = styled.div`
 
 export const Container: UserComponent = ({ children }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
   } = useNode((node) => ({
     selected: node.events.selected,
   }));
 
-  return (
-    <div ref={(ref) => connect(drag(ref))}>
-      {children || <Wrapper>+ Add Block</Wrapper>}
-    </div>
-  );
+  return <div ref={connect}>{children || <Wrapper>+ Add Block</Wrapper>}</div>;
 };
 
 Container.craft = {

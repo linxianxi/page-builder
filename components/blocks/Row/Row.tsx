@@ -28,12 +28,12 @@ interface RowProps {
 
 export const Row: UserComponent<RowProps> = ({ children, padding, margin }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
   } = useNode();
 
   return (
     <Wrapper
-      ref={(ref: HTMLDivElement) => connect(drag(ref))}
+      ref={connect}
       style={{
         padding: padding?.map((item) => `${item || "0"}px`).join(" "),
         margin: margin?.map((item) => `${item || "0"}px`).join(" "),

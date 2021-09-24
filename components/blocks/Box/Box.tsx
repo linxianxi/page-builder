@@ -6,13 +6,13 @@ export interface BoxProps extends BaseBoxProps {}
 
 export const Box: UserComponent<BoxProps> = ({ children, ...otherProps }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
   } = useNode((node) => ({
     selected: node.events.selected,
   }));
 
   return (
-    <BaseBox ref={(ref) => connect(drag(ref))} {...otherProps}>
+    <BaseBox ref={connect} {...otherProps}>
       {children}
     </BaseBox>
   );

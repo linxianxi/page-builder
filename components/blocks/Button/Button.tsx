@@ -2,18 +2,15 @@ import { UserComponent, useNode } from "@craftjs/core";
 import { Button as BaseButton, ButtonProps } from "@chakra-ui/react";
 import React from "react";
 
-import { ToolBar } from "../../Editor/components/ToolBar";
-import { StylePanel } from "../../Editor/components/StylePanel";
-
 export const Button: UserComponent<ButtonProps> = ({ children, ...rest }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
   } = useNode((node) => ({
     selected: node.events.selected,
   }));
 
   return (
-    <BaseButton ref={(ref) => connect(drag(ref))} {...rest}>
+    <BaseButton ref={connect} {...rest}>
       {children || "按钮"}
     </BaseButton>
   );

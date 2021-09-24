@@ -1,7 +1,7 @@
 import { UserComponent } from "@craftjs/core";
 import React from "react";
 import { Resizer } from "./components/Resizer";
-import { StylePanel } from "../../Editor/components/StylePanel";
+import { StylePanel } from "../../editor/components/StylePanel";
 import styled from "@emotion/styled";
 
 const Empty = styled.div`

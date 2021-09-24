@@ -1,6 +1,6 @@
 import { UserComponent, useNode } from "@craftjs/core";
 import React from "react";
-import { ToolBar } from "../../Editor/components/ToolBar";
+import { ToolBar } from "../../editor/components/ToolBar";
 
 export interface CodeProps {
   code?: string;
@@ -9,7 +9,7 @@ export interface CodeProps {
 
 export const Code: UserComponent<CodeProps> = () => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
     props,
   } = useNode((node) => ({
     selected: node.events.selected,
@@ -18,7 +18,7 @@ export const Code: UserComponent<CodeProps> = () => {
 
   return (
     <div
-      ref={(ref) => connect(drag(ref))}
+      ref={connect}
       style={{ height: props.code ? null : 30 }}
       dangerouslySetInnerHTML={{
         __html: props.code,

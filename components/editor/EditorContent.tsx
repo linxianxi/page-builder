@@ -4,7 +4,7 @@ import { Box, Grid, GridItem, useToken } from "@chakra-ui/react";
 import createCache from "@emotion/cache";
 import weakMemoize from "@emotion/weak-memoize";
 
-import { SideBar } from "./components/Sidebar";
+import { SideBar } from "./components/SideBar";
 import { TopBar } from "./components/TopBar";
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { usePreviewMode } from "./hooks/usePreviewMode";

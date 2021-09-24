@@ -5,19 +5,19 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 
-import { ToolBar } from "../../Editor/components/ToolBar";
-import { StylePanel } from "../../Editor/components/StylePanel";
+import { ToolBar } from "../../editor/components/ToolBar";
+import { StylePanel } from "../../editor/components/StylePanel";
 
 export interface ImageProps extends BaseImageProps {}
 
 export const Image: UserComponent<ImageProps> = ({ src, ...otherProps }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect },
   } = useNode();
 
   return (
     <BaseImage
-      ref={(ref) => connect(drag(ref))}
+      ref={connect}
       maxWidth="full"
       src={src || "https://cdn.pagefly.io/static/images/placeholder-square.svg"}
       {...otherProps}
