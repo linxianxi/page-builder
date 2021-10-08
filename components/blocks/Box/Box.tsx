@@ -1,10 +1,7 @@
 import { UserComponent, useNode } from "@craftjs/core";
-import { Box as BaseBox, BoxProps as BaseBoxProps } from "@chakra-ui/react";
 import React from "react";
 
-export interface BoxProps extends BaseBoxProps {}
-
-export const Box: UserComponent<BoxProps> = ({ children, ...otherProps }) => {
+export const Box: UserComponent = ({ children, ...otherProps }) => {
   const {
     connectors: { connect },
   } = useNode((node) => ({
@@ -12,9 +9,9 @@ export const Box: UserComponent<BoxProps> = ({ children, ...otherProps }) => {
   }));
 
   return (
-    <BaseBox ref={connect} {...otherProps}>
+    <div ref={connect} {...otherProps}>
       {children}
-    </BaseBox>
+    </div>
   );
 };
 

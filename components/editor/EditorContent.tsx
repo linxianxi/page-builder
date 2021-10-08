@@ -15,7 +15,7 @@ import { useCallback } from "react";
 
 const memoizedCreateCacheWithContainer = weakMemoize(
   (container: HTMLElement) => {
-    let newCache = createCache({ container, key: "iframe" });
+    let newCache = createCache({ container, key: "page-builder" });
     return newCache;
   }
 );
@@ -81,8 +81,10 @@ export const EditorContent: FC = ({ children }) => {
               width: "100%",
               height: "100%",
               margin: "0 auto",
-              borderLeft: previewMode !== "desktop" && "1px solid #ccc",
-              borderRight: previewMode !== "desktop" && "1px solid #ccc",
+              borderLeft:
+                previewMode !== "desktop" ? "1px solid #ccc" : undefined,
+              borderRight:
+                previewMode !== "desktop" ? "1px solid #ccc" : undefined,
             }}
             head={
               <style type="text/css">

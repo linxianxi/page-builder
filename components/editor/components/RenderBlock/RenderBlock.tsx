@@ -1,4 +1,4 @@
-import { useNode, useEditor, Node, ROOT_NODE } from "@craftjs/core";
+import { useNode, useEditor, Node, ROOT_NODE, NodeTree } from "@craftjs/core";
 import { getRandomId } from "@craftjs/utils";
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
@@ -21,10 +21,23 @@ import { useRect } from "@reach/rect";
 
 let memoizedCreateCacheWithScope = memoize((scope) => {
   return createCache({
-    key: "origin",
+    key: "render-block",
     stylisPlugins: [stylisPluginExtraScope(scope)],
   });
 });
+
+const fromEntries = (pairs) => {
+  if (Object.fromEntries) {
+    return Object.fromEntries(pairs);
+  }
+  return pairs.reduce(
+    (accum, [id, value]) => ({
+      ...accum,
+      [id]: value,
+    }),
+    {}
+  );
+};
 
 export const RenderBlock = ({ render }) => {
   const { actions, query, hoveredNodeId, nodes, store } = useEditor(
@@ -177,44 +190,55 @@ export const RenderBlock = ({ render }) => {
     query,
   ]);
 
+  const getCloneTree = useCallback(
+    (tree: NodeTree) => {
+      const newNodes = {};
+      const changeNodeId = (node: Node, newParentId?: string) => {
+        const newNodeId = getRandomId();
+        const childNodes = node.data.nodes.map((childId) =>
+          changeNodeId(tree.nodes[childId], newNodeId)
+        );
+        const linkedNodes = Object.keys(node.data.linkedNodes).reduce(
+          (acc, id) => {
+            const newLinkedNodeId = changeNodeId(
+              tree.nodes[node.data.linkedNodes[id]],
+              newNodeId
+            );
+            return {
+              ...acc,
+              [id]: newLinkedNodeId,
+            };
+          },
+          {}
+        );
+
+        let tmpNode = {
+          ...node,
+          id: newNodeId,
+          data: {
+            ...node.data,
+            parent: newParentId || node.data.parent,
+            nodes: childNodes,
+            linkedNodes,
+          },
+        };
+        let freshNode = query.parseFreshNode(tmpNode).toNode();
+        newNodes[newNodeId] = freshNode;
+        return newNodeId;
+      };
+
+      const rootNodeId = changeNodeId(tree.nodes[tree.rootNodeId]);
+      return {
+        rootNodeId,
+        nodes: newNodes,
+      };
+    },
+    [query]
+  );
+
   const handleCopy = useCallback(() => {
     const tree = query.node(id).toNodeTree();
-    const newNodes = {};
-    const changeNodeId = (node: Node, newParentId?: string) => {
-      const newNodeId = getRandomId();
-      const childNodes = node.data.nodes.map((childId) =>
-        changeNodeId(tree.nodes[childId], newNodeId)
-      );
-      const linkedNodes = Object.keys(node.data.linkedNodes).reduce(
-        (acc, id) => {
-          const newLinkedNodeId = changeNodeId(
-            tree.nodes[node.data.linkedNodes[id]],
-            newNodeId
-          );
-          return {
-            ...acc,
-            [id]: newLinkedNodeId,
-          };
-        },
-        {}
-      );
-
-      let tmpNode = {
-        ...node,
-        id: newNodeId,
-        data: {
-          ...node.data,
-          parent: newParentId || node.data.parent,
-          nodes: childNodes,
-          linkedNodes,
-        },
-      };
-      let freshNode = query.parseFreshNode(tmpNode).toNode();
-      newNodes[newNodeId] = freshNode;
-      return newNodeId;
-    };
-
-    const rootNodeId = changeNodeId(tree.nodes[tree.rootNodeId]);
+    const { rootNodeId, nodes: newNodes } = getCloneTree(tree);
 
     const theNode = query.node(id).get();
     const parentNode = query.node(theNode.data.parent).get();
@@ -244,6 +268,7 @@ export const RenderBlock = ({ render }) => {
           props.columnWidth = newWidth;
         });
       });
+
       actions.history.ignore().addNodeTree(
         {
           rootNodeId,
@@ -292,7 +317,7 @@ export const RenderBlock = ({ render }) => {
     }
 
     actions.selectNode(rootNodeId);
-  }, [actions, id, name, query, store.history]);
+  }, [actions, getCloneTree, id, name, query, store.history]);
 
   const handleDelete = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -337,7 +362,7 @@ export const RenderBlock = ({ render }) => {
             const { columnWidth } = query.node(item).get().data.props;
             const newWidth = `${
               parseFloat(columnWidth) +
-              parseFloat(nodeProps.columnWidth) / otherChildrenArr.length
+              parseFloat(nodeProps?.columnWidth) / otherChildrenArr.length
             }%`;
 
             newPatches.push({
@@ -394,7 +419,7 @@ export const RenderBlock = ({ render }) => {
       id,
       name,
       nodeChildren,
-      nodeProps.columnWidth,
+      nodeProps?.columnWidth,
       nodes,
       parent,
       query,
@@ -402,9 +427,40 @@ export const RenderBlock = ({ render }) => {
     ]
   );
 
+  const handleAdd = useCallback(() => {
+    const data = JSON.parse(localStorage.getItem("template"));
+    const newNodes = JSON.parse(data.nodes);
+    const nodePairs = Object.keys(newNodes).map((id) => {
+      let nodeId = id;
+
+      return [
+        nodeId,
+        query
+          .parseSerializedNode(newNodes[id])
+          .toNode((node) => (node.id = nodeId)),
+      ];
+    });
+    const tree = { rootNodeId: data.rootNodeID, nodes: fromEntries(nodePairs) };
+    const newTree = getCloneTree(tree);
+
+    // 添加到你想要的地方
+    actions.addNodeTree(newTree, ROOT_NODE, 0);
+    actions.selectNode(newTree.rootNodeId);
+  }, [actions, getCloneTree, query]);
+
   const handleSaveTemplate = useCallback(() => {
-    console.log("保存为模版");
-  }, []);
+    const tree = query.node(id).toNodeTree();
+    const nodePairs = Object.keys(tree.nodes).map((id) => [
+      id,
+      query.node(id).toSerializedNode(),
+    ]);
+    const serializedNodesJSON = JSON.stringify(fromEntries(nodePairs));
+    const saveData = {
+      rootNodeID: tree.rootNodeId,
+      nodes: serializedNodesJSON,
+    };
+    localStorage.setItem("template", JSON.stringify(saveData));
+  }, [id, query]);
 
   return (
     <>
@@ -418,7 +474,7 @@ export const RenderBlock = ({ render }) => {
                   h="30px"
                   mt="-29px"
                   borderRadius="md"
-                  zIndex={9999}
+                  zIndex={999}
                   overflow="hidden"
                   color="#fff"
                   ref={currentRef}

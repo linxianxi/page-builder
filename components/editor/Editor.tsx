@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Editor as CraftEditor } from "@craftjs/core";
+import { Editor as CraftEditor, Element } from "@craftjs/core";
 import { Code } from "../blocks/Code";
 import { Container } from "../blocks/Container";
 import { Image } from "../blocks/Image";
@@ -8,8 +8,9 @@ import { Column, Row } from "../blocks/Row";
 import { Button } from "../blocks/Button";
 import { RenderBlock } from "./components/RenderBlock";
 import { EditorContent } from "./EditorContent";
-
-export const Editor: FC = ({ children }) => (
+import { OpsTemplate } from "../templates/ops-template";
+import { TopBanner } from "../templates/ops-template/components/TopBanner";
+export const Editor: FC = () => (
   <CraftEditor
     resolver={{
       Box: UserBox,
@@ -19,9 +20,13 @@ export const Editor: FC = ({ children }) => (
       Column,
       Row,
       Button,
+      OpsTemplate,
+      TopBanner,
     }}
     onRender={RenderBlock}
   >
-    <EditorContent>{children}</EditorContent>
+    <EditorContent>
+      <OpsTemplate />
+    </EditorContent>
   </CraftEditor>
 );
