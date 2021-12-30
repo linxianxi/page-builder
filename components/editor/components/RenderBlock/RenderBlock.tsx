@@ -523,7 +523,7 @@ export const RenderBlock = ({ render }) => {
                             icon={<FaCopy />}
                           />
                         </Tooltip>
-                        <Tooltip label="保存为模版">
+                        {/* <Tooltip label="保存为模版">
                           <IconButton
                             colorScheme="black"
                             aria-label="save as template"
@@ -532,7 +532,7 @@ export const RenderBlock = ({ render }) => {
                             onClick={handleSaveTemplate}
                             icon={<FaCloudDownloadAlt />}
                           />
-                        </Tooltip>
+                        </Tooltip> */}
                       </>
                     )}
 

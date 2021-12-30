@@ -34,7 +34,7 @@ export type UseQuery<
   getCacheKey: (variables?: TVariables) => CacheKey;
 };
 
-export function createUseNewQuery<
+export function createUseQuery<
   TData = any,
   TVariables extends OperationVariables = OperationVariables
 >(createOptions: CreateQueryOptions<TVariables>): UseQuery<TData, TVariables> {

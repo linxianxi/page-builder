@@ -10,6 +10,9 @@ import { RenderBlock } from "./components/RenderBlock";
 import { EditorContent } from "./EditorContent";
 import { OpsTemplate } from "../templates/ops-template";
 import { TopBanner } from "../templates/ops-template/components/TopBanner";
+import { HeaderLogo } from "../templates/ops-template/components/HeaderLogo";
+import { Products } from "../templates/ops-template/components/Products";
+
 export const Editor: FC = () => (
   <CraftEditor
     resolver={{
@@ -22,11 +25,11 @@ export const Editor: FC = () => (
       Button,
       OpsTemplate,
       TopBanner,
+      HeaderLogo,
+      Products,
     }}
     onRender={RenderBlock}
   >
-    <EditorContent>
-      <OpsTemplate />
-    </EditorContent>
+    <EditorContent>{/* <OpsTemplate /> */}</EditorContent>
   </CraftEditor>
 );

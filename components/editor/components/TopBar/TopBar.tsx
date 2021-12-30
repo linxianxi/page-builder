@@ -87,6 +87,16 @@ export const TopBar = () => {
           </Portal>
         </Popover>
 
+        <div
+          onClick={() =>
+            actions.setOptions(
+              (options) => (options.enabled = !options.enabled)
+            )
+          }
+        >
+          模式切换
+        </div>
+
         <Tooltip label="撤销">
           <IconButton
             aria-label="撤销"

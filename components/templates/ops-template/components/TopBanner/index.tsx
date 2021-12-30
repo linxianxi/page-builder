@@ -3,11 +3,11 @@ import React, { FC } from "react";
 import Image from "next/image";
 import BannerImg from "../../../../../public/banner.png";
 import { useNode, UserComponent } from "@craftjs/core";
-import { Input } from "@ahri-ui/core";
-import { Text } from "@chakra-ui/react";
+import { ColorPickerInput, Input } from "@ahri-ui/core";
+import { FormLabel } from "@chakra-ui/react";
 
-const Title = styled.div`
-  background-color: #30bd51;
+const Title = styled.div<{ backgroundColor: string }>`
+  background-color: ${({ backgroundColor }) => backgroundColor};
   color: #fff;
   font-size: 20px;
   height: 44px;
@@ -15,14 +15,14 @@ const Title = styled.div`
   text-align: center;
 `;
 
-export const TopBanner: UserComponent = ({ title }) => {
+export const TopBanner: UserComponent = ({ title, backgroundColor }) => {
   const {
     connectors: { connect },
   } = useNode();
 
   return (
     <header ref={connect}>
-      <Title>{title}</Title>
+      <Title backgroundColor={backgroundColor}>{title}</Title>
       <Image src={BannerImg} alt="" />
     </header>
   );
@@ -38,12 +38,21 @@ const TopBannerSetting: FC = () => {
 
   return (
     <>
-      <Text>文字</Text>
+      <FormLabel>文字</FormLabel>
       <Input
         value={nodeProps.title}
         onChange={(e) =>
           setProp((props) => {
             props.title = e.target.value;
+          }, 500)
+        }
+      />
+      <FormLabel>背景颜色</FormLabel>
+      <ColorPickerInput
+        value={nodeProps.backgroundColor}
+        onChange={(color) =>
+          setProp((props) => {
+            props.backgroundColor = color;
           })
         }
       />
@@ -53,8 +62,9 @@ const TopBannerSetting: FC = () => {
 
 TopBanner.craft = {
   displayName: "顶部栏",
-  defaultProps: {
+  props: {
     title: "Your 50% OFF Discount Has Been Applied!",
+    backgroundColor: "#30bd51",
   },
   related: {
     inputPanel: () => <TopBannerSetting />,
