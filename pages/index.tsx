@@ -1,12 +1,12 @@
 import React from "react";
+import { Element } from "@craftjs/core";
+import { Container } from "../components/blocks/Container";
 import { Editor } from "../components/editor";
-import { QueryClientProvider } from "react-query";
-import { queryClient } from "../lib/client";
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Editor />
-    </QueryClientProvider>
+    <Editor>
+      <Element<any> canvas is={Container} custom={{ displayName: "页面" }} />
+    </Editor>
   );
 }
