@@ -3,7 +3,7 @@ import { Resizable, ResizableProps } from "re-resizable";
 import React, { FC, useMemo, useRef } from "react";
 import { useCallback } from "react";
 import omit from "lodash/omit";
-import styled from "@emotion/styled";
+import styled from "styled-components";
 
 const StyledResizable = styled(Resizable as any)`
   @media (max-width: 768px) {

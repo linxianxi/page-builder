@@ -1,9 +1,9 @@
 import { ROOT_NODE, useEditor, useNode, UserComponent } from "@craftjs/core";
 import React, { FC, useCallback } from "react";
-import { Button } from "@chakra-ui/react";
+import { Button } from "antd";
 import { Patch } from "immer";
 import { Column } from "./Column";
-import styled from "@emotion/styled";
+import styled from "styled-components";
 
 // import { ColumnSettings } from "./ColumnSettings";
 

@@ -21,6 +21,11 @@ export const Editor: FC = ({ children }) => (
       Button,
     }}
     onRender={RenderBlock}
+    indicator={{
+      success: "#52c41a",
+      error: "#ff4d4f",
+      thickness: 5,
+    }}
   >
     <EditorContent>{children}</EditorContent>
   </CraftEditor>

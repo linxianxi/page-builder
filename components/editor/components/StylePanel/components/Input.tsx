@@ -1,9 +1,4 @@
-import {
-  Flex,
-  FormLabel,
-  Input as BaseInput,
-  InputProps as BaseInputProps,
-} from "@chakra-ui/react";
+import { Input as BaseInput, InputProps as BaseInputProps } from "antd";
 import { useNode } from "@craftjs/core";
 import React, { FC } from "react";
 import { ReactNode } from "react";
@@ -11,15 +6,9 @@ import { ReactNode } from "react";
 export interface InputProps extends BaseInputProps {
   label: ReactNode;
   propName: string;
-  layout?: "vertical" | "horizontal";
 }
 
-export const Input: FC<InputProps> = ({
-  label,
-  propName,
-  layout = "vertical",
-  ...props
-}) => {
+export const Input: FC<InputProps> = ({ label, propName, ...props }) => {
   const {
     actions: { setProp },
     propValue,
@@ -28,19 +17,9 @@ export const Input: FC<InputProps> = ({
   }));
 
   return (
-    <Flex
-      direction={layout === "horizontal" ? "row" : "column"}
-      justify={layout === "horizontal" && "space-between"}
-      align={layout === "horizontal" && "center"}
-    >
-      {layout === "horizontal" && (
-        <FormLabel wordBreak="keep-all" mb={0}>
-          {label}
-        </FormLabel>
-      )}
-      {layout === "vertical" && <FormLabel>{label}</FormLabel>}
+    <div>
+      <div>{label}</div>
       <BaseInput
-        size="sm"
         value={propValue || ""}
         onChange={(event) => {
           setProp((props) => {
@@ -49,6 +28,6 @@ export const Input: FC<InputProps> = ({
         }}
         {...props}
       />
-    </Flex>
+    </div>
   );
 };

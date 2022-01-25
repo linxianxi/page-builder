@@ -1,6 +1,6 @@
-import { Flex, Text, Select as BaseSelect, FormLabel } from "@chakra-ui/react";
 import { useNode } from "@craftjs/core";
 import React, { FC, ReactNode } from "react";
+import { Select as BaseSelect } from "antd";
 
 export interface SelectProps {
   label: ReactNode;
@@ -23,31 +23,22 @@ export const Select: FC<SelectProps> = ({
   }));
 
   return (
-    <Flex
-      direction={layout === "horizontal" ? "row" : "column"}
-      justify={layout === "horizontal" && "space-between"}
-      align={layout === "horizontal" && "center"}
+    <div
+    // direction={layout === "horizontal" ? "row" : "column"}
+    // justify={layout === "horizontal" && "space-between"}
+    // align={layout === "horizontal" && "center"}
     >
-      {layout === "horizontal" && (
-        <FormLabel wordBreak="keep-all" mb={0}>
-          {label}
-        </FormLabel>
-      )}
-      {layout === "vertical" && <FormLabel>{label}</FormLabel>}
+      {layout === "horizontal" && <>{label}</>}
+      {layout === "vertical" && <>{label}</>}
       <BaseSelect
         value={propValue}
-        onChange={(event) => {
+        onChange={(value) => {
           setProp((props) => {
-            props[propName] = event.target.value;
+            props[propName] = value;
           });
         }}
-      >
-        {options.map((option) => (
-          <option value={option.value} key={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </BaseSelect>
-    </Flex>
+        options={options}
+      />
+    </div>
   );
 };

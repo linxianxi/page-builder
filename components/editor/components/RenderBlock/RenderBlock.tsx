@@ -1,43 +1,22 @@
-import { useNode, useEditor, Node, ROOT_NODE, NodeTree } from "@craftjs/core";
-import { getRandomId } from "@craftjs/utils";
-import React, { useEffect, useRef } from "react";
+import { useNode, useEditor, ROOT_NODE } from "@craftjs/core";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { Patch } from "immer";
-import {
-  FaArrowsAlt,
-  FaTrash,
-  FaCopy,
-  FaCloudDownloadAlt,
-} from "react-icons/fa";
 import { useCallback } from "react";
-import createCache from "@emotion/cache";
-import { CacheProvider } from "@emotion/react";
-import memoize from "@emotion/memoize";
-import stylisPluginExtraScope from "stylis-plugin-extra-scope";
 import { useIsScrolling } from "../../hooks/useIsScrolling";
-import { Flex, IconButton, Tooltip, Text, Box } from "@chakra-ui/react";
 import { usePreviewMode } from "../../hooks/usePreviewMode";
 import { useRect } from "@reach/rect";
-
-let memoizedCreateCacheWithScope = memoize((scope) => {
-  return createCache({
-    key: "render-block",
-    stylisPlugins: [stylisPluginExtraScope(scope)],
-  });
-});
-
-const fromEntries = (pairs) => {
-  if (Object.fromEntries) {
-    return Object.fromEntries(pairs);
-  }
-  return pairs.reduce(
-    (accum, [id, value]) => ({
-      ...accum,
-      [id]: value,
-    }),
-    {}
-  );
-};
+import { Modal, Tooltip, Form, Input } from "antd";
+import getCloneTree from "../../utils/getCloneTree";
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  DragOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
+import { useTemplates } from "../../hooks/useTemplates";
+import { useLocalStorage } from "react-use";
+import fromEntries from "../../utils/fromEntries";
 
 export const RenderBlock = ({ render }) => {
   const { actions, query, hoveredNodeId, nodes, store } = useEditor(
@@ -77,6 +56,8 @@ export const RenderBlock = ({ render }) => {
     nodeChildren: node.data.nodes,
   }));
 
+  const [form] = Form.useForm();
+  const [templateModalVisible, setTemplateModalVisible] = useState(false);
   const currentRef = useRef<HTMLDivElement>();
 
   const ref = useRef(dom);
@@ -84,6 +65,8 @@ export const RenderBlock = ({ render }) => {
 
   const [previewMode] = usePreviewMode();
   const [isScrolling] = useIsScrolling();
+  const [templates, setTemplates] = useTemplates();
+  const [localTemplates, setLocalTemplates] = useLocalStorage("templates", {});
 
   const getPos = useCallback((dom: HTMLElement) => {
     const { top, left, bottom } = dom
@@ -190,55 +173,9 @@ export const RenderBlock = ({ render }) => {
     query,
   ]);
 
-  const getCloneTree = useCallback(
-    (tree: NodeTree) => {
-      const newNodes = {};
-      const changeNodeId = (node: Node, newParentId?: string) => {
-        const newNodeId = getRandomId();
-        const childNodes = node.data.nodes.map((childId) =>
-          changeNodeId(tree.nodes[childId], newNodeId)
-        );
-        const linkedNodes = Object.keys(node.data.linkedNodes).reduce(
-          (acc, id) => {
-            const newLinkedNodeId = changeNodeId(
-              tree.nodes[node.data.linkedNodes[id]],
-              newNodeId
-            );
-            return {
-              ...acc,
-              [id]: newLinkedNodeId,
-            };
-          },
-          {}
-        );
-
-        let tmpNode = {
-          ...node,
-          id: newNodeId,
-          data: {
-            ...node.data,
-            parent: newParentId || node.data.parent,
-            nodes: childNodes,
-            linkedNodes,
-          },
-        };
-        let freshNode = query.parseFreshNode(tmpNode).toNode();
-        newNodes[newNodeId] = freshNode;
-        return newNodeId;
-      };
-
-      const rootNodeId = changeNodeId(tree.nodes[tree.rootNodeId]);
-      return {
-        rootNodeId,
-        nodes: newNodes,
-      };
-    },
-    [query]
-  );
-
   const handleCopy = useCallback(() => {
     const tree = query.node(id).toNodeTree();
-    const { rootNodeId, nodes: newNodes } = getCloneTree(tree);
+    const { rootNodeId, nodes: newNodes } = getCloneTree(tree, query);
 
     const theNode = query.node(id).get();
     const parentNode = query.node(theNode.data.parent).get();
@@ -317,10 +254,10 @@ export const RenderBlock = ({ render }) => {
     }
 
     actions.selectNode(rootNodeId);
-  }, [actions, getCloneTree, id, name, query, store.history]);
+  }, [actions, id, name, query, store.history]);
 
   const handleDelete = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
       event.stopPropagation();
       if (name === "Column") {
         // 剩下的 Column
@@ -428,7 +365,7 @@ export const RenderBlock = ({ render }) => {
   );
 
   const handleAdd = useCallback(() => {
-    const data = JSON.parse(localStorage.getItem("template"));
+    const data = JSON.parse(localStorage.getItem("templates"));
     const newNodes = JSON.parse(data.nodes);
     const nodePairs = Object.keys(newNodes).map((id) => {
       let nodeId = id;
@@ -440,99 +377,96 @@ export const RenderBlock = ({ render }) => {
           .toNode((node) => (node.id = nodeId)),
       ];
     });
-    const tree = { rootNodeId: data.rootNodeID, nodes: fromEntries(nodePairs) };
-    const newTree = getCloneTree(tree);
+    const tree = { rootNodeId: data.rootNodeId, nodes: fromEntries(nodePairs) };
+    const newTree = getCloneTree(tree, query);
 
     // 添加到你想要的地方
     actions.addNodeTree(newTree, ROOT_NODE, 0);
     actions.selectNode(newTree.rootNodeId);
-  }, [actions, getCloneTree, query]);
+  }, [actions, query]);
 
-  const handleSaveTemplate = useCallback(() => {
-    const tree = query.node(id).toNodeTree();
-    const nodePairs = Object.keys(tree.nodes).map((id) => [
-      id,
-      query.node(id).toSerializedNode(),
-    ]);
-    const serializedNodesJSON = JSON.stringify(fromEntries(nodePairs));
-    const saveData = {
-      rootNodeID: tree.rootNodeId,
-      nodes: serializedNodesJSON,
-    };
-    localStorage.setItem("template", JSON.stringify(saveData));
-  }, [id, query]);
+  const handleSaveTemplate = useCallback(
+    (values) => {
+      setTemplateModalVisible(false);
+      const tree = query.node(id).toNodeTree();
+      const nodePairs = Object.keys(tree.nodes).map((id) => [
+        id,
+        query.node(id).toSerializedNode(),
+      ]);
+      const serializedNodesJSON = JSON.stringify(fromEntries(nodePairs));
+      const saveData = {
+        rootNodeId: tree.rootNodeId,
+        nodes: serializedNodesJSON,
+      };
+      setTemplates((prev) => ({ ...prev, [values.name]: saveData }));
+      setLocalTemplates({ ...localTemplates, [values.name]: saveData });
+    },
+    [id, localTemplates, query, setLocalTemplates, setTemplates]
+  );
 
   return (
     <>
       {(isHover || isActive) && !isScrolling && rect
         ? ReactDOM.createPortal(
-            <CacheProvider value={memoizedCreateCacheWithScope("#root")}>
+            <>
               {id !== ROOT_NODE && (
-                <Flex
-                  pos="absolute"
-                  align="center"
-                  h="30px"
-                  mt="-29px"
-                  borderRadius="md"
-                  zIndex={999}
-                  overflow="hidden"
-                  color="#fff"
+                <div
+                  className="flex absolute overflow-hidden items-center rounded text-white"
+                  style={{
+                    zIndex: 999,
+                    left: getPos(dom).left,
+                    top: getPos(dom).top,
+                    height: 28,
+                    marginTop: -27,
+                  }}
                   ref={currentRef}
-                  left={getPos(dom).left}
-                  top={getPos(dom).top}
                 >
-                  <Flex bg="blackAlpha.900" borderRadius="md" align="center">
-                    <Text color="#fff" px={3} py={2}>
-                      {displayName}
-                    </Text>
+                  <div className="flex bg-gray-800 rounded items-center overflow-hidden">
+                    <span className="px-3">{displayName}</span>
                     {isActive && (
                       <>
                         {moveable && (
-                          <Tooltip label="拖拽">
-                            <IconButton
-                              colorScheme="black"
+                          <Tooltip title="拖拽">
+                            <div
                               ref={drag}
-                              h="30px"
-                              _hover={{ bg: "#464850" }}
-                              aria-label="drag"
-                              icon={<FaArrowsAlt />}
-                            />
+                              draggable
+                              className="hover:bg-gray-700 cursor-pointer h-7 w-7 flex justify-center items-center"
+                            >
+                              <DragOutlined />
+                            </div>
                           </Tooltip>
                         )}
 
                         {deletable && (
-                          <Tooltip label="删除">
-                            <IconButton
-                              colorScheme="black"
-                              aria-label="delete"
-                              h="30px"
-                              _hover={{ bg: "#464850" }}
+                          <Tooltip title="删除">
+                            <div
                               onClick={handleDelete}
-                              icon={<FaTrash />}
-                            />
+                              className="hover:bg-gray-700 cursor-pointer h-7 w-7 flex justify-center items-center"
+                            >
+                              <DeleteOutlined />
+                            </div>
                           </Tooltip>
                         )}
 
-                        <Tooltip label="拷贝">
-                          <IconButton
-                            colorScheme="black"
-                            aria-label="copy"
-                            h="30px"
-                            _hover={{ bg: "#464850" }}
+                        <Tooltip title="拷贝">
+                          <div
                             onClick={handleCopy}
-                            icon={<FaCopy />}
-                          />
+                            className="hover:bg-gray-700 cursor-pointer h-7 w-7 flex justify-center items-center"
+                          >
+                            <CopyOutlined />
+                          </div>
                         </Tooltip>
-                        {/* <Tooltip label="保存为模版">
-                          <IconButton
-                            colorScheme="black"
-                            aria-label="save as template"
-                            h="30px"
-                            _hover={{ bg: "#464850" }}
-                            onClick={handleSaveTemplate}
-                            icon={<FaCloudDownloadAlt />}
-                          />
-                        </Tooltip> */}
+                        <Tooltip title="保存为模版">
+                          <div
+                            className="hover:bg-gray-700 cursor-pointer h-7 w-7 flex justify-center items-center"
+                            onClick={() => {
+                              setTemplateModalVisible(true);
+                              form.resetFields();
+                            }}
+                          >
+                            <SaveOutlined />
+                          </div>
+                        </Tooltip>
                       </>
                     )}
 
@@ -556,37 +490,59 @@ export const RenderBlock = ({ render }) => {
                   />
                 </Tooltip>
               ) : null} */}
-                  </Flex>
-                </Flex>
+                  </div>
+                </div>
               )}
 
               {name !== "Column" && (
-                <Box
-                  pos="absolute"
-                  zIndex="docked"
+                <div
+                  className={`absolute z-10 pointer-events-none after:content-'' after:absolute after:top-0 after:left-0 after:right-0 after:bottom-0 after:border-2 after:border-blue-400 ${
+                    isActive ? "after:border-dashed" : "after:border-solid"
+                  }`}
                   style={{
                     top: rect.top,
                     width: rect.width,
                     height: rect.height,
                     left: rect.left,
                   }}
-                  pointerEvents="none"
-                  sx={{
-                    "&:after": {
-                      pos: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      content: '""',
-                      borderStyle: isActive ? "dashed" : "solid",
-                      borderWidth: "2px",
-                      borderColor: "blue.500",
-                    },
-                  }}
-                ></Box>
+                />
               )}
-            </CacheProvider>,
+
+              <Modal
+                title="保存为模版"
+                visible={templateModalVisible}
+                onCancel={() => setTemplateModalVisible(false)}
+                onOk={form.submit}
+              >
+                <Form
+                  form={form}
+                  onFinish={handleSaveTemplate}
+                  layout="vertical"
+                >
+                  <Form.Item
+                    style={{ marginBottom: 0 }}
+                    name="name"
+                    label="模块名称"
+                    rules={[
+                      { required: true, message: "请输入模版名称" },
+                      {
+                        validator: (_, value) => {
+                          if (Object.keys(templates).includes(value)) {
+                            return Promise.reject(
+                              new Error("此模版名称已存在！")
+                            );
+                          } else {
+                            return Promise.resolve();
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <Input />
+                  </Form.Item>
+                </Form>
+              </Modal>
+            </>,
             document.querySelector(".page-container")
           )
         : null}

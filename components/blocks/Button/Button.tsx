@@ -1,8 +1,7 @@
 import { UserComponent, useNode } from "@craftjs/core";
-import { Button as BaseButton, ButtonProps } from "@chakra-ui/react";
 import React from "react";
 
-export const Button: UserComponent<ButtonProps> = ({ children, ...rest }) => {
+export const Button: UserComponent = ({ children, ...rest }) => {
   const {
     connectors: { connect },
   } = useNode((node) => ({
@@ -10,30 +9,12 @@ export const Button: UserComponent<ButtonProps> = ({ children, ...rest }) => {
   }));
 
   return (
-    <BaseButton ref={connect} {...rest}>
+    <button ref={connect} {...rest}>
       {children || "按钮"}
-    </BaseButton>
+    </button>
   );
 };
 
 Button.craft = {
   displayName: "按钮",
-  //   related: {
-  //     inputPanel: () => {
-  //       return (
-  //         <ToolBar
-  //           inputs={[
-  //             {
-  //               type: "string",
-  //               name: "地址",
-  //               prop: "src",
-  //             },
-  //           ]}
-  //         />
-  //       );
-  //     },
-  //     stylePanel: () => {
-  //       return <StylePanel />;
-  //     },
-  //   },
 };

@@ -1,18 +1,6 @@
-import {
-  Button,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { Button, Modal } from "antd";
 import { useNode } from "@craftjs/core";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import Editor from "@monaco-editor/react";
 
 interface CodeInputProps {
@@ -30,37 +18,33 @@ export const CodeInput: FC<CodeInputProps> = ({ input }) => {
     propValue: node.data.props[input.prop],
   }));
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [visible, setVisible] = useState(false);
 
   return (
-    <FormControl key={input.name}>
-      <FormLabel>{input.name}</FormLabel>
+    <>
+      <>{input.name}</>
 
-      <Button isFullWidth onClick={onOpen}>
+      <Button block onClick={() => setVisible(true)}>
         编辑代码
       </Button>
 
-      <Modal size="6xl" isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>编辑代码</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Editor
-              options={{ minimap: { enabled: false } }}
-              height="70vh"
-              defaultLanguage="html"
-              value={propValue}
-              onChange={(value) => {
-                setProp((props: any) => {
-                  props[input.prop] = value;
-                }, 500);
-              }}
-            />
-          </ModalBody>
-          <ModalFooter />
-        </ModalContent>
+      <Modal
+        title="编辑代码"
+        visible={visible}
+        onCancel={() => setVisible(false)}
+      >
+        <Editor
+          options={{ minimap: { enabled: false } }}
+          height="70vh"
+          defaultLanguage="html"
+          value={propValue}
+          onChange={(value) => {
+            setProp((props: any) => {
+              props[input.prop] = value;
+            }, 500);
+          }}
+        />
       </Modal>
-    </FormControl>
+    </>
   );
 };
